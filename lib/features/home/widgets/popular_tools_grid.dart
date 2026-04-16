@@ -35,63 +35,68 @@ class PopularToolsGrid extends StatelessWidget {
         final bool isMobile = width < 700;
         final bool isTablet = width < 1100 && width >= 700;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1250),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00FFD1).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFF00FFD1).withOpacity(0.2),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00FFD1).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF00FFD1).withOpacity(0.2),
+                            ),
+                          ),
+                          child: Text(
+                            'LIVE_FEATURED_TOOLS',
+                            style: GoogleFonts.ibmPlexMono(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF00FFD1),
+                              letterSpacing: 2.0,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'LIVE_FEATURED_TOOLS',
-                        style: GoogleFonts.ibmPlexMono(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF00FFD1),
-                          letterSpacing: 2.0,
+                        const SizedBox(height: 12),
+                        Text(
+                          'Top Rated AI Tools',
+                          style: GoogleFonts.inter(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -1.5,
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Top Rated AI Tools',
-                      style: GoogleFonts.inter(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: -1.5,
-                      ),
+                      ],
                     ),
                   ],
                 ),
+                const SizedBox(height: 64),
+
+                if (featuredTools.isEmpty)
+                  _EmptyFeaturedState(isLoading: toolProvider.isLoading)
+                else if (isMobile)
+                  _buildMobileLayout(featuredTools)
+                else if (isTablet)
+                  _buildTabletLayout(width, featuredTools)
+                else
+                  _buildDesktopLayout(width, featuredTools),
               ],
             ),
-            const SizedBox(height: 64),
-
-            if (featuredTools.isEmpty)
-              _EmptyFeaturedState(isLoading: toolProvider.isLoading)
-            else if (isMobile)
-              _buildMobileLayout(featuredTools)
-            else if (isTablet)
-              _buildTabletLayout(width, featuredTools)
-            else
-              _buildDesktopLayout(width, featuredTools),
-          ],
+          ),
         );
       },
     );

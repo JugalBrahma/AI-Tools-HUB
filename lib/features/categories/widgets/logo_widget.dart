@@ -114,16 +114,16 @@ class _LogoWidgetState extends State<LogoWidget> {
         url = widget.tool.logo;
         break;
       case 1:
-        url = d.isNotEmpty ? 'https://logo.clearbit.com/$d?size=512' : '';
-        break;
-      case 2:
-        url = d.isNotEmpty ? 'https://unavatar.io/$d' : '';
-        break;
-      case 3:
         url = d.isNotEmpty ? 'https://icons.duckduckgo.com/ip3/$d.ico' : '';
         break;
-      case 4:
+      case 2:
         url = d.isNotEmpty ? 'https://icon.horse/icon/$d' : '';
+        break;
+      case 3:
+        url = d.isNotEmpty ? 'https://unavatar.io/$d' : '';
+        break;
+      case 4:
+        url = d.isNotEmpty ? 'https://logo.clearbit.com/$d' : '';
         break;
       default:
         url = '';
@@ -134,8 +134,8 @@ class _LogoWidgetState extends State<LogoWidget> {
   String _wrapCORS(String url) {
     if (!kIsWeb || url.isEmpty || url.startsWith('assets/')) return url;
     // weserv.nl is a free image proxy that adds CORS headers
-    // Increased multiplier to 4 for ultra-sharp images on 4K screens
-    return 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}&w=${(widget.size * 4).toInt()}&fit=contain';
+    // Reverted to 2.5x for a natural, sharp look without over-sharpening
+    return 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}&w=${(widget.size * 2.5).toInt()}&fit=contain';
   }
 
   void _nextStage() {
@@ -188,7 +188,7 @@ class _LogoWidgetState extends State<LogoWidget> {
           localPath,
           fit: BoxFit.contain,
           scale: 1.0,
-          filterQuality: FilterQuality.high,
+          filterQuality: FilterQuality.medium,
           errorBuilder: (context, error, stackTrace) {
             if (!widget.forceLocal) _nextStage();
             return _buildInitials();
@@ -217,9 +217,9 @@ class _LogoWidgetState extends State<LogoWidget> {
       child: CachedNetworkImage(
         imageUrl: url,
         fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-        memCacheWidth: (widget.size * 4).toInt(),
-        memCacheHeight: (widget.size * 4).toInt(),
+        filterQuality: FilterQuality.medium,
+        memCacheWidth: (widget.size * 2.5).toInt(),
+        memCacheHeight: (widget.size * 2.5).toInt(),
         placeholder: (context, s) => _buildInitials(),
         errorWidget: (context, error, stack) {
           _nextStage();
