@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:toolshub/core/models/tool_model.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
+import 'package:toolshub/features/categories/widgets/logo_widget.dart';
 
 class CategoryRow extends StatelessWidget {
   const CategoryRow({super.key});
@@ -44,7 +45,7 @@ class CategoryRow extends StatelessWidget {
     'zapier',
     'make',
     'airtable',
-    'figma',
+    'logrocket',
     'mistral',
     'grok',
     'deepseek',
@@ -270,71 +271,13 @@ class _CarouselLayout extends StatelessWidget {
   }
 }
 
-class _CarouselItem extends StatefulWidget {
+class _CarouselItem extends StatelessWidget {
   const _CarouselItem({required this.tool, required this.size});
   final ToolInfo tool;
   final double size;
 
   @override
-  State<_CarouselItem> createState() => _CarouselItemState();
-}
-
-class _CarouselItemState extends State<_CarouselItem> {
-  Widget _buildFallbackLogo() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: widget.tool.logoGradient,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          widget.tool.name.length >= 2
-              ? widget.tool.name.substring(0, 2).toUpperCase()
-              : widget.tool.name.isNotEmpty
-              ? widget.tool.name[0].toUpperCase()
-              : 'AI',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            fontSize: 18,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final tool = widget.tool;
-    final s = widget.size;
-
-    return Container(
-      width: s,
-      height: s,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(s * 0.19),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(s * 0.19 - 1),
-        child: tool.logo.isEmpty
-            ? _buildFallbackLogo()
-            : CachedNetworkImage(
-                imageUrl: tool.logo,
-                width: s,
-                height: s,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
-                memCacheWidth: (s * 3).round(),
-                memCacheHeight: (s * 3).round(),
-                placeholder: (context, _) => _buildFallbackLogo(),
-                errorWidget: (context, _, __) => _buildFallbackLogo(),
-              ),
-      ),
-    );
+    return LogoWidget(tool: tool, size: size, forceLocal: true);
   }
 }
