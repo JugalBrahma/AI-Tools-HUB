@@ -63,34 +63,35 @@ class _AnimatedGridBackgroundState extends State<AnimatedGridBackground> {
           if (!kIsWeb) const FloatingOrb(delay: 1, size: 180, top: 0.7, left: 0.2),
 
           // ── Mouse Glow (Optimized with ValueListenableBuilder) ────────────
-          ValueListenableBuilder<Offset>(
-            valueListenable: _mousePosition,
-            builder: (context, pos, child) {
-              return AnimatedPositioned(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCirc,
-                left: pos.dx - 250,
-                top: pos.dy - 250,
-                child: child!,
-              );
-            },
-            child: IgnorePointer(
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF4A89FF).withOpacity(0.08),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.7],
+          if (!kIsWeb)
+            ValueListenableBuilder<Offset>(
+              valueListenable: _mousePosition,
+              builder: (context, pos, child) {
+                return AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCirc,
+                  left: pos.dx - 250,
+                  top: pos.dy - 250,
+                  child: child!,
+                );
+              },
+              child: IgnorePointer(
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF4A89FF).withOpacity(0.08),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.7],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
           // ── Main Content ──────────────────────────────────────────────────
           Positioned.fill(child: widget.child),

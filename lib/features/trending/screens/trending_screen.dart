@@ -478,7 +478,7 @@ class _HeroFeatureCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ClipRRect(borderRadius: BorderRadius.circular(8), child: entry.logo.isNotEmpty ? Image.network(entry.logo, width: 40, height: 40, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _InitialBox(name: entry.name, color: color, size: 40)) : _InitialBox(name: entry.name, color: color, size: 40)),
+                _ToolLogo(entry: entry, color: color, size: 40),
                 _Badge(label: 'CURRENT LEADER', color: color),
               ],
             ),
@@ -532,12 +532,7 @@ class _MiniFeatureBox extends StatelessWidget {
           children: [
             Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: entry.logo.isNotEmpty
-                      ? Image.network(entry.logo, width: 44, height: 44, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _InitialBox(name: entry.name, color: color, size: 44))
-                      : _InitialBox(name: entry.name, color: color, size: 44),
-                ),
+                _ToolLogo(entry: entry, color: color, size: 44),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -571,12 +566,7 @@ class _VideoFeatureBox extends StatelessWidget {
         decoration: BoxDecoration(color: const Color(0xFF13141C), borderRadius: BorderRadius.circular(12), border: Border.all(color: _kBorder)),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: entry.logo.isNotEmpty
-                  ? Image.network(entry.logo, width: 44, height: 44, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _InitialBox(name: entry.name, color: color, size: 44))
-                  : _InitialBox(name: entry.name, color: color, size: 44),
-            ),
+            _ToolLogo(entry: entry, color: color, size: 44),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [Text(entry.name, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)), const SizedBox(width: 8), _Badge(label: 'ALPHA', color: color)]),
@@ -608,12 +598,7 @@ class _RankedItemRow extends StatelessWidget {
               children: [
                 SizedBox(width: 24, child: Text('${entry.rank}', style: GoogleFonts.ibmPlexMono(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white24))),
                 const SizedBox(width: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: entry.logo.isNotEmpty
-                      ? Image.network(entry.logo, width: 28, height: 28, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _InitialBox(name: entry.name, color: color, size: 28))
-                      : _InitialBox(name: entry.name, color: color, size: 28),
-                ),
+                _ToolLogo(entry: entry, color: color, size: 28),
                 const SizedBox(width: 12),
                 Expanded(child: Text(entry.name, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70))),
                 Icon(Icons.arrow_outward_rounded, size: 14, color: color.withOpacity(0.6)),
@@ -641,6 +626,28 @@ class _Badge extends StatelessWidget {
   final Color color;
   @override
   Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: color.withOpacity(0.9), borderRadius: BorderRadius.circular(4)), child: Text(label, style: GoogleFonts.ibmPlexMono(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.black)));
+}
+
+class _ToolLogo extends StatelessWidget {
+  const _ToolLogo({required this.entry, required this.color, required this.size});
+  final TrendingEntry entry;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.2),
+      child: CachedNetworkImage(
+        imageUrl: entry.logo,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        placeholder: (context, url) => _InitialBox(name: entry.name, color: color, size: size),
+        errorWidget: (context, url, error) => _InitialBox(name: entry.name, color: color, size: size),
+      ),
+    );
+  }
 }
 
 class _LogoFallback extends StatelessWidget {
