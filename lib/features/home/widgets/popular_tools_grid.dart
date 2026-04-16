@@ -379,22 +379,10 @@ class _PopularToolCardState extends State<_PopularToolCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: logoSize,
-                          height: logoSize,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.10),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: LogoWidget(tool: tool),
-                          ),
+                        LogoWidget(
+                          tool: tool,
+                          size: logoSize,
                         ),
                       ],
                     ),

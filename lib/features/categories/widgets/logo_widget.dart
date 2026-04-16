@@ -5,8 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:toolshub/core/models/tool_model.dart';
 
 class LogoWidget extends StatefulWidget {
-  const LogoWidget({super.key, required this.tool});
+  const LogoWidget({super.key, required this.tool, this.size = 52.0});
   final ToolInfo tool;
+  final double size;
 
   @override
   State<LogoWidget> createState() => _LogoWidgetState();
@@ -63,17 +64,17 @@ class _LogoWidgetState extends State<LogoWidget> {
         : tool.name.isNotEmpty ? tool.name[0].toUpperCase() : 'AI';
 
     return Container(
-      width: 52,
-      height: 52,
+      width: widget.size,
+      height: widget.size,
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: tool.logoGradient),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(widget.size * 0.27),
       ),
       child: Center(
         child: Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 18,
+            fontSize: widget.size * 0.35,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
@@ -87,10 +88,10 @@ class _LogoWidgetState extends State<LogoWidget> {
     final localPath = _localAsset;
     if (localPath != null) {
       return Container(
-        width: 52,
-        height: 52,
+        width: widget.size,
+        height: widget.size,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(widget.size * 0.27),
         ),
         clipBehavior: Clip.antiAlias,
         child: Image.asset(
@@ -105,30 +106,25 @@ class _LogoWidgetState extends State<LogoWidget> {
     }
 
     final url = _currentUrl;
-    if (url.isEmpty) { _nextStage(); return const SizedBox(width: 52, height: 52); }
+    if (url.isEmpty) { _nextStage(); return SizedBox(width: widget.size, height: widget.size); }
 
     return Container(
-      width: 52,
-      height: 52,
+      width: widget.size,
+      height: widget.size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(widget.size * 0.27),
       ),
       clipBehavior: Clip.antiAlias,
       child: CachedNetworkImage(
         imageUrl: url,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.low,
-        memCacheWidth: 52 * 2, // Double for retina displays
-        memCacheHeight: 52 * 2,
+        memCacheWidth: (widget.size * 2).toInt(),
+        memCacheHeight: (widget.size * 2).toInt(),
         placeholder: (context, s) => _buildInitials(),
         errorWidget: (context, error, stack) {
-          return SvgPicture.network(
-            url,
-            width: 52,
-            height: 52,
-            fit: BoxFit.contain,
-            errorBuilder: (ctx, err, s) { _nextStage(); return _buildInitials(); },
-          );
+          _nextStage();
+          return _buildInitials();
         },
       ),
     );

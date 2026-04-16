@@ -84,6 +84,9 @@ class _ScrollRevealState extends State<ScrollReveal> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // On web, VisibilityDetector is unreliable — skip animation, show immediately
+    if (kIsWeb) return widget.child;
+
     return VisibilityDetector(
       key: Key('scroll_reveal_${identityHashCode(widget)}_${widget.child.runtimeType}'),
       onVisibilityChanged: _onVisibilityChanged,
