@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "882099140446",
+    "project_id": "tools-hub-4c4a1",
+    "storage_bucket": "tools-hub-4c4a1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882099140446:android:4f95b800e8e0bfe69901cf",
+        "android_client_info": {
+          "package_name": "com.example.toolshub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjOhQWmz69EPIJ30bVjTwsEc-iRR0Uv38"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
