@@ -5,7 +5,6 @@ import 'package:toolshub/core/models/tool_model.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
 import 'package:toolshub/features/categories/widgets/logo_widget.dart';
 import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PopularToolsGrid extends StatelessWidget {
   const PopularToolsGrid({super.key});
@@ -80,28 +79,6 @@ class PopularToolsGrid extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (!isMobile)
-                  TextButton(
-                    onPressed: () {},
-                    child: Row(
-                      children: [
-                        Text(
-                          'Discover all tools',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.east_rounded,
-                          size: 16,
-                          color: Colors.white70,
-                        ),
-                      ],
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 64),
@@ -357,21 +334,6 @@ class _PopularToolCard extends StatefulWidget {
 }
 
 class _PopularToolCardState extends State<_PopularToolCard> {
-  bool _launching = false;
-
-  Future<void> _openTool() async {
-    final rawUrl = widget.tool.url.trim();
-    if (rawUrl.isEmpty) return;
-
-    final normalized = rawUrl.contains('://') ? rawUrl : 'https://$rawUrl';
-    final uri = Uri.tryParse(normalized);
-    if (uri == null) return;
-
-    setState(() => _launching = true);
-    await launchUrl(uri, mode: LaunchMode.platformDefault);
-    if (mounted) setState(() => _launching = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final tool = widget.tool;
@@ -434,31 +396,6 @@ class _PopularToolCardState extends State<_PopularToolCard> {
                             child: LogoWidget(tool: tool),
                           ),
                         ),
-                        if (!isCompact)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.14),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: color.withOpacity(0.24),
-                              ),
-                            ),
-                            child: Text(
-                              tool.pricing.trim().isEmpty
-                                  ? 'UNKNOWN'
-                                  : tool.pricing.toUpperCase(),
-                              style: GoogleFonts.ibmPlexMono(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
-                                color: color,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                     SizedBox(
@@ -514,37 +451,9 @@ class _PopularToolCardState extends State<_PopularToolCard> {
                           ),
                         ),
                         const Spacer(),
-                        if (!isCompact)
-                          Row(
-                            children: [
-                              Text(
-                                _launching ? 'Opening...' : 'Open Tool',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: color,
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              Icon(
-                                Icons.north_east_rounded,
-                                size: 11,
-                                color: color,
-                              ),
-                            ],
-                          ),
                       ],
                     ),
                   ],
-                ),
-              ),
-              Positioned.fill(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: _launching ? null : _openTool,
-                  ),
                 ),
               ),
             ],

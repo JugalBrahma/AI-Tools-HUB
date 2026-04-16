@@ -86,6 +86,7 @@ flutter:
     - assets/logos/
     - assets/trending/
     - assets/logo/
+    - lib/core/assets/top_rated_ai_tools/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

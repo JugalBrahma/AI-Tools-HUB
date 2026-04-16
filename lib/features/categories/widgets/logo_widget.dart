@@ -27,6 +27,17 @@ class _LogoWidgetState extends State<LogoWidget> {
     }
   }
 
+  String? get _localAsset {
+    final name = widget.tool.name.toLowerCase();
+    if (name.contains('chatgpt')) return 'lib/core/assets/top_rated_ai_tools/chatgpt.png';
+    if (name.contains('claude')) return 'lib/core/assets/top_rated_ai_tools/claude.png';
+    if (name.contains('gemini')) return 'lib/core/assets/top_rated_ai_tools/gemini.png';
+    if (name.contains('perplexity')) return 'lib/core/assets/top_rated_ai_tools/perplexity.png';
+    if (name.contains('midjourney')) return 'lib/core/assets/top_rated_ai_tools/midjourney.png';
+    if (name.contains('cursor')) return 'lib/core/assets/top_rated_ai_tools/cursor.png';
+    return null;
+  }
+
   String get _currentUrl {
     final d = _domain;
     switch (_stage) {
@@ -73,6 +84,22 @@ class _LogoWidgetState extends State<LogoWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final localPath = _localAsset;
+    if (localPath != null) {
+      return Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.asset(
+          localPath,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+
     if (_stage >= 5 || (widget.tool.logo.isEmpty && widget.tool.url.isEmpty)) {
       return _buildInitials();
     }
