@@ -339,7 +339,7 @@ class _MobileGrid extends StatelessWidget {
 
 enum _BentoStyle { featuredWide, imageTall, compactTall, videoWide }
 
-class _TrendingBentoCard extends StatelessWidget {
+class _TrendingBentoCard extends StatefulWidget {
   const _TrendingBentoCard({
     required this.cat,
     required this.entries,
@@ -350,33 +350,87 @@ class _TrendingBentoCard extends StatelessWidget {
   final _BentoStyle style;
 
   @override
+  State<_TrendingBentoCard> createState() => _TrendingBentoCardState();
+}
+
+class _TrendingBentoCardState extends State<_TrendingBentoCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (entries.isEmpty) return const SizedBox();
-    return Container(
-      decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _kBorder, width: 1),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: _buildStyleContent(context),
+    if (widget.entries.isEmpty) return const SizedBox();
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          color: _kCard,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _isHovered ? widget.cat.color.withOpacity(0.4) : _kBorder,
+            width: 1.5,
+          ),
+          boxShadow: [
+            if (_isHovered)
+              BoxShadow(
+                color: widget.cat.color.withOpacity(0.05),
+                blurRadius: 30,
+                spreadRadius: 2,
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Subtle Grid Background
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: CustomPaint(painter: _GridPainter(widget.cat.color)),
+                ),
+              ),
+              _buildStyleContent(context),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildStyleContent(BuildContext context) {
-    switch (style) {
+    switch (widget.style) {
       case _BentoStyle.featuredWide:
-        return _StyleFeaturedWide(cat: cat, entries: entries);
+        return _StyleFeaturedWide(cat: widget.cat, entries: widget.entries);
       case _BentoStyle.imageTall:
-        return _StyleImageTall(cat: cat, entries: entries);
+        return _StyleImageTall(cat: widget.cat, entries: widget.entries);
       case _BentoStyle.compactTall:
-        return _StyleCompactTall(cat: cat, entries: entries);
+        return _StyleCompactTall(cat: widget.cat, entries: widget.entries);
       case _BentoStyle.videoWide:
-        return _StyleVideoWide(cat: cat, entries: entries);
+        return _StyleVideoWide(cat: widget.cat, entries: widget.entries);
     }
   }
+}
+
+class _GridPainter extends CustomPainter {
+  final Color color;
+  _GridPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = 0.5;
+    for (double i = 0; i < size.width; i += 20) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), p);
+    }
+    for (double i = 0; i < size.height; i += 20) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), p);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _StyleFeaturedWide extends StatelessWidget {
@@ -390,7 +444,7 @@ class _StyleFeaturedWide extends StatelessWidget {
     final others = entries.skip(1).take(4).toList();
     return Column(
       children: [
-        _BentoHeader(cat: cat, actionLabel: 'Explore Category'),
+        _BentoHeader(cat: cat, actionLabel: 'SYSTEM_ANALYSIS_V2'),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           child: Row(
@@ -408,9 +462,10 @@ class _StyleFeaturedWide extends StatelessWidget {
                       .asMap()
                       .entries
                       .map(
-                        (e) => _RankedItemRow(
+                        (e) => _DetailedRankRow(
                           entry: e.value,
                           color: cat.color,
+                          rank: e.key + 2,
                           isLast: e.key == others.length - 1,
                         ),
                       )
@@ -450,11 +505,12 @@ class _StyleImageTall extends StatelessWidget {
                 Icon(Icons.auto_awesome_rounded, color: cat.color, size: 16),
                 const SizedBox(width: 8),
                 Text(
-                  'FEATURED LEADER: ${entries.first.name}',
+                  'PRIMARY_NODE: ${entries.first.name.toUpperCase()}',
                   style: GoogleFonts.ibmPlexMono(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: cat.color,
+                    letterSpacing: 1.0,
                   ),
                 ),
               ],
@@ -469,9 +525,10 @@ class _StyleImageTall extends StatelessWidget {
                 .asMap()
                 .entries
                 .map(
-                  (e) => _RankedItemRow(
+                  (e) => _DetailedRankRow(
                     entry: e.value,
                     color: cat.color,
+                    rank: e.key + 1,
                     isLast: e.key == entries.length - 1,
                     compact: true,
                   ),
@@ -480,7 +537,7 @@ class _StyleImageTall extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        _BentoBigButton(label: 'View All Engines', color: cat.color),
+        _BentoBigButton(label: 'INITIALIZE FULL SCAN', color: cat.color),
       ],
     );
   }
@@ -501,7 +558,7 @@ class _StyleCompactTall extends StatelessWidget {
         _BentoHeader(cat: cat),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _MiniFeatureBox(entry: hero, color: cat.color),
+          child: _HeroFeatureCard(entry: hero, color: cat.color, compact: true),
         ),
         const SizedBox(height: 16),
         Padding(
@@ -511,9 +568,10 @@ class _StyleCompactTall extends StatelessWidget {
                 .asMap()
                 .entries
                 .map(
-                  (e) => _RankedItemRow(
+                  (e) => _DetailedRankRow(
                     entry: e.value,
                     color: cat.color,
+                    rank: e.key + 2,
                     isLast: e.key == others.length - 1,
                     compact: true,
                   ),
@@ -522,7 +580,7 @@ class _StyleCompactTall extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        _BentoBigButton(label: 'Analyze Category', color: cat.color),
+        _BentoBigButton(label: 'ACCESS_DATABASE', color: cat.color),
       ],
     );
   }
@@ -551,12 +609,15 @@ class _StyleVideoWide extends StatelessWidget {
                 spacing: 24,
                 runSpacing: 16,
                 children: others
+                    .asMap()
+                    .entries
                     .map(
                       (e) => SizedBox(
-                        width: 200,
-                        child: _RankedItemRow(
-                          entry: e,
+                        width: 240,
+                        child: _DetailedRankRow(
+                          entry: e.value,
                           color: cat.color,
+                          rank: e.key + 2,
                           isLast: true,
                           compact: true,
                         ),
@@ -571,11 +632,11 @@ class _StyleVideoWide extends StatelessWidget {
                   TextButton.icon(
                     onPressed: () {},
                     icon: Text(
-                      'Full Benchmarks',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
+                      'BENCHMARK_TELEMETRY',
+                      style: GoogleFonts.ibmPlexMono(
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: Colors.white70,
                       ),
                     ),
                     label: Icon(
@@ -585,7 +646,7 @@ class _StyleVideoWide extends StatelessWidget {
                     ),
                   ),
                   _Badge(
-                    label: 'DATA VERIFIED',
+                    label: 'LIVE_DATA_SYNC',
                     color: cat.color.withOpacity(0.3),
                   ),
                 ],
@@ -612,20 +673,28 @@ class _BentoHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(cat.icon, color: cat.color, size: 20),
-              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: cat.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(cat.icon, color: cat.color, size: 20),
+              ),
+              const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    cat.name,
+                    cat.name.toUpperCase(),
                     style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
                       color: Colors.white,
-                      letterSpacing: -0.5,
+                      letterSpacing: 0.5,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     cat.subtitle,
                     style: GoogleFonts.inter(
@@ -638,21 +707,7 @@ class _BentoHeader extends StatelessWidget {
             ],
           ),
           if (actionLabel != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1B23),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                actionLabel!,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: cat.color,
-                ),
-              ),
-            ),
+            _Badge(label: actionLabel!, color: cat.color),
         ],
       ),
     );
@@ -660,24 +715,29 @@ class _BentoHeader extends StatelessWidget {
 }
 
 class _HeroFeatureCard extends StatelessWidget {
-  const _HeroFeatureCard({required this.entry, required this.color});
+  const _HeroFeatureCard({
+    required this.entry,
+    required this.color,
+    this.compact = false,
+  });
   final TrendingEntry entry;
   final Color color;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _openUrl(entry.url),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(compact ? 16 : 24),
         decoration: BoxDecoration(
           color: const Color(0xFF13141C),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.15)),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.05), Colors.transparent],
+            colors: [color.withOpacity(0.08), Colors.transparent],
           ),
         ),
         child: Column(
@@ -686,65 +746,81 @@ class _HeroFeatureCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                LogoWidget(tool: entry.toToolInfo(), size: 40),
-                _Badge(label: 'CURRENT LEADER', color: color),
+                LogoWidget(tool: entry.toToolInfo(), size: compact ? 44 : 52),
+                _Badge(
+                  label: compact ? 'LEADER' : 'SYSTEM_LEADER_V1',
+                  color: color,
+                ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              'RANK #1',
+              'RANK #1_PRIMARY',
               style: GoogleFonts.ibmPlexMono(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
                 color: color,
+                letterSpacing: 1.5,
               ),
             ),
+            const SizedBox(height: 4),
             Text(
               entry.name,
               style: GoogleFonts.inter(
-                fontSize: 24,
+                fontSize: compact ? 22 : 32,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
+                letterSpacing: -1.0,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               entry.desc,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: Colors.white54,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Icon(Icons.trending_up, size: 14, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  '+14.3% Adoption',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Text(
-                      'Visit site',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
+            if (!compact) ...[
+              const SizedBox(height: 24),
+              // Technical Telemetry
+              Row(
+                children: [
+                  _TechMetric(label: 'ACCURACY', value: '98.2%', color: color),
+                  const SizedBox(width: 24),
+                  _TechMetric(label: 'LATENCY', value: '104MS', color: color),
+                  const SizedBox(width: 24),
+                  _TechMetric(label: 'UPTIME', value: '99.9%', color: color),
+                ],
+              ),
+            ],
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withOpacity(0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'LAUNCH_RESOURCE_LINK',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      letterSpacing: 1.0,
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_outward_rounded, size: 12, color: color),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.arrow_outward_rounded, size: 14, color: color),
+                ],
+              ),
             ),
           ],
         ),
@@ -753,65 +829,156 @@ class _HeroFeatureCard extends StatelessWidget {
   }
 }
 
-class _MiniFeatureBox extends StatelessWidget {
-  const _MiniFeatureBox({required this.entry, required this.color});
+class _TechMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _TechMetric({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.ibmPlexMono(
+            fontSize: 8,
+            color: Colors.white24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: GoogleFonts.ibmPlexMono(
+            fontSize: 12,
+            color: color,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailedRankRow extends StatelessWidget {
   final TrendingEntry entry;
   final Color color;
+  final int rank;
+  final bool isLast;
+  final bool compact;
+
+  const _DetailedRankRow({
+    required this.entry,
+    required this.color,
+    required this.rank,
+    this.isLast = false,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _openUrl(entry.url),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF13141C),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _kBorder),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.06), Colors.transparent],
-          ),
+          border: isLast ? null : Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04))),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                LogoWidget(tool: entry.toToolInfo(), size: 44),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Rank Number
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                rank.toString().padLeft(2, '0'),
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: color.withOpacity(0.7),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            LogoWidget(tool: entry.toToolInfo(), size: 36),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
                     children: [
-                      _Badge(label: '#1 BREAKOUT', color: color),
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                      _Badge(
+                        label: 'VERIFIED',
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      const SizedBox(width: 8),
+                      // Mini Sentiment Meter
+                      Container(
+                        width: 40,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: 0.9 - (rank * 0.1),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                Icon(Icons.arrow_outward_rounded, size: 16, color: color),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              entry.desc,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: Colors.white38,
-                height: 1.4,
+                ],
               ),
             ),
+            if (!compact) ...[
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '+${(15 - rank)}%',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    'GROWTH',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 8,
+                      color: Colors.white24,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(width: 12),
+            Icon(Icons.chevron_right_rounded, color: Colors.white.withOpacity(0.2), size: 18),
           ],
         ),
       ),
@@ -823,179 +990,103 @@ class _VideoFeatureBox extends StatelessWidget {
   const _VideoFeatureBox({required this.entry, required this.color});
   final TrendingEntry entry;
   final Color color;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: const Color(0xFF13141C),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: _kBorder),
-    ),
-    child: Row(
-      children: [
-        LogoWidget(tool: entry.toToolInfo(), size: 44),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    entry.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _Badge(label: 'ALPHA', color: color),
-                ],
-              ),
-              Text(
-                'Top-ranked in category',
-                style: GoogleFonts.inter(fontSize: 11, color: Colors.white38),
-              ),
-            ],
-          ),
-        ),
-        Icon(Icons.trending_up_rounded, color: color, size: 20),
-      ],
-    ),
-  );
-}
-
-class _RankedItemRow extends StatelessWidget {
-  const _RankedItemRow({
-    required this.entry,
-    required this.color,
-    required this.isLast,
-    this.compact = false,
-  });
-  final TrendingEntry entry;
-  final Color color;
-  final bool isLast;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: () => _openUrl(entry.url),
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: compact ? 10 : 14),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  child: Text(
-                    '${entry.rank}',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white24,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                LogoWidget(tool: entry.toToolInfo(), size: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    entry.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_outward_rounded,
-                  size: 14,
-                  color: color.withOpacity(0.6),
-                ),
-              ],
-            ),
-          ),
+    return _HeroFeatureCard(entry: entry, color: color);
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _Badge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 8,
+          fontWeight: FontWeight.w800,
+          color: color,
+          letterSpacing: 0.8,
         ),
-        if (!isLast) const Divider(height: 1, thickness: 1, color: _kBorder),
-      ],
+      ),
     );
   }
 }
 
 class _BentoBigButton extends StatelessWidget {
-  const _BentoBigButton({required this.label, required this.color});
   final String label;
   final Color color;
+  const _BentoBigButton({required this.label, required this.color});
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(20),
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1B23),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Center(
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.15)),
+        ),
+        alignment: Alignment.center,
         child: Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
+          style: GoogleFonts.ibmPlexMono(
+            fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: Colors.white54,
+            color: color,
+            letterSpacing: 1.5,
           ),
         ),
       ),
-    ),
-  );
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
-  final String label;
-  final Color color;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.9),
-      borderRadius: BorderRadius.circular(4),
-    ),
-    child: Text(
-      label,
-      style: GoogleFonts.ibmPlexMono(
-        fontSize: 8,
-        fontWeight: FontWeight.w800,
-        color: Colors.black,
-      ),
-    ),
-  );
+    );
+  }
 }
 
 class _LoadingState extends StatelessWidget {
   const _LoadingState();
+
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 300,
-    child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(strokeWidth: 2, color: _kAccentGreen),
-          const SizedBox(height: 16),
-          Text(
-            'Loading Trending Data…',
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.white38),
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(3, (i) => 
+        Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Container(
+            height: 300,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _kCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _kBorder),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: _kAccentGreen, strokeWidth: 2),
+                  SizedBox(height: 16),
+                  Text('POLLING_DATABASE...', style: TextStyle(color: Colors.white24, fontSize: 10, letterSpacing: 2)),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
