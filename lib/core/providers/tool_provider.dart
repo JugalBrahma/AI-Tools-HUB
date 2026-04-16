@@ -204,6 +204,26 @@ class ToolProvider with ChangeNotifier {
   List<CategoryData> get categories => _categories;
   bool get isLoading => _isLoading;
 
+  void _precacheLogos(List<CategoryData> categories) {
+    final allTools = categories.expand((c) => c.tools).toList();
+    
+    for (final tool in allTools) {
+      if (tool.logo.isNotEmpty) {
+        // Wrap in the same CORS proxy used in LogoWidget
+        final url = _wrapCORSForPrecache(tool.logo);
+        // Pre-warm the cache. This works even without a BuildContext.
+        CachedNetworkImageProvider(url).resolve(ImageConfiguration.empty).addListener(
+          ImageStreamListener((_, __) {}, onError: (_, __) {}),
+        );
+      }
+    }
+  }
+
+  String _wrapCORSForPrecache(String url) {
+    if (!kIsWeb || url.isEmpty || url.startsWith('assets/')) return url;
+    return 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}&w=104&fit=contain';
+  }
+
   void _fetchTools() {
     FirebaseFirestore.instance
         .collectionGroup('tools')
@@ -232,6 +252,9 @@ class ToolProvider with ChangeNotifier {
             _categories = built;
             _isLoading = false;
             notifyListeners();
+
+            // ── Step 4: Precache images in background (Web & Native) ──────────
+            _precacheLogos(built);
           },
           onError: (error) {
             debugPrint('Error fetching tools: $error');

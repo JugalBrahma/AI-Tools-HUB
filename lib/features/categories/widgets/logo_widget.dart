@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -41,14 +42,22 @@ class _LogoWidgetState extends State<LogoWidget> {
 
   String get _currentUrl {
     final d = _domain;
+    String url;
     switch (_stage) {
-      case 0: return widget.tool.logo;
-      case 1: return d.isNotEmpty ? 'https://icons.duckduckgo.com/ip3/$d.ico' : '';
-      case 2: return d.isNotEmpty ? 'https://icon.horse/icon/$d' : '';
-      case 3: return d.isNotEmpty ? 'https://unavatar.io/$d' : '';
-      case 4: return d.isNotEmpty ? 'https://logo.clearbit.com/$d' : '';
-      default: return '';
+      case 0: url = widget.tool.logo; break;
+      case 1: url = d.isNotEmpty ? 'https://icons.duckduckgo.com/ip3/$d.ico' : ''; break;
+      case 2: url = d.isNotEmpty ? 'https://icon.horse/icon/$d' : ''; break;
+      case 3: url = d.isNotEmpty ? 'https://unavatar.io/$d' : ''; break;
+      case 4: url = d.isNotEmpty ? 'https://logo.clearbit.com/$d' : ''; break;
+      default: url = '';
     }
+    return _wrapCORS(url);
+  }
+
+  String _wrapCORS(String url) {
+    if (!kIsWeb || url.isEmpty || url.startsWith('assets/')) return url;
+    // weserv.nl is a free image proxy that adds CORS headers
+    return 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}&w=${(widget.size * 2).toInt()}&fit=contain';
   }
 
   void _nextStage() {
