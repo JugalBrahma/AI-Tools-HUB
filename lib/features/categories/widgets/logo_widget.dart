@@ -31,12 +31,17 @@ class _LogoWidgetState extends State<LogoWidget> {
 
   String? get _localAsset {
     final name = widget.tool.name.toLowerCase();
-    if (name.contains('chatgpt')) return 'lib/core/assets/top_rated_ai_tools/chatgpt.png';
-    if (name.contains('claude')) return 'lib/core/assets/top_rated_ai_tools/claude.png';
-    if (name.contains('gemini')) return 'lib/core/assets/top_rated_ai_tools/gemini.png';
-    if (name.contains('perplexity')) return 'lib/core/assets/top_rated_ai_tools/perplexity.png';
-    if (name.contains('midjourney')) return 'lib/core/assets/top_rated_ai_tools/midjourney.png';
-    if (name.contains('cursor')) return 'lib/core/assets/top_rated_ai_tools/cursor.png';
+    final url = widget.tool.url.toLowerCase();
+    
+    bool matches(String term) => name.contains(term) || url.contains(term);
+
+    if (matches('chatgpt') || url.contains('openai')) return 'lib/core/assets/top_rated_ai_tools/chatgpt.png';
+    if (matches('claude') || url.contains('anthropic')) return 'lib/core/assets/top_rated_ai_tools/claude.png';
+    if (matches('gemini')) return 'lib/core/assets/top_rated_ai_tools/gemini.png';
+    if (matches('perplexity')) return 'lib/core/assets/top_rated_ai_tools/perplexity.png';
+    if (matches('midjourney')) return 'lib/core/assets/top_rated_ai_tools/midjourney.png';
+    if (matches('cursor')) return 'lib/core/assets/top_rated_ai_tools/cursor.png';
+    
     return null;
   }
 
@@ -95,7 +100,7 @@ class _LogoWidgetState extends State<LogoWidget> {
   @override
   Widget build(BuildContext context) {
     final localPath = _localAsset;
-    if (localPath != null) {
+    if (localPath != null && _stage == 0) {
       return Container(
         width: widget.size,
         height: widget.size,
@@ -106,6 +111,10 @@ class _LogoWidgetState extends State<LogoWidget> {
         child: Image.asset(
           localPath,
           fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            _nextStage();
+            return _buildInitials();
+          },
         ),
       );
     }

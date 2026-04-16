@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'tool_model.dart';
+
 class TrendingEntry {
   final String docId;
   final int rank;
@@ -108,5 +111,22 @@ class TrendingEntry {
     // Last resort: use the tool's own URL domain
     final fd = domain(fallbackUrl);
     return fd.isNotEmpty ? gstatic('https://$fd') : logoUrl;
+  }
+
+  /// Converts this TrendingEntry into a ToolInfo for reuse in standard widgets.
+  ToolInfo toToolInfo() {
+    return ToolInfo(
+      docId: docId,
+      name: name,
+      url: url,
+      description: desc,
+      logo: logo,
+      category: 'Trending',
+      pricing: '',
+      accentColor: const Color(0xFF6C5CE7),
+      logoGradient: const [Color(0xFF6C5CE7), Color(0xFF4834D4)],
+      searchName: name.toLowerCase(),
+      searchDescription: desc.toLowerCase(),
+    );
   }
 }

@@ -225,6 +225,41 @@ class _FloatingOrbState extends State<FloatingOrb>
   @override
   Widget build(BuildContext context) {
     final blurSigma = kIsWeb ? 16.0 : 30.0;
+    
+    final content = AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _translateY.value),
+          child: Transform.scale(
+            scale: _scale.value,
+            child: Opacity(opacity: _opacity.value, child: child),
+          ),
+        );
+      },
+      child: IgnorePointer(
+        child: ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+          child: Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF6366F1),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (kIsWeb) {
+      return Positioned(
+        top: MediaQuery.of(context).size.height * widget.top - (widget.size / 2),
+        left: MediaQuery.of(context).size.width * widget.left - (widget.size / 2),
+        child: content,
+      );
+    }
+
     return Positioned(
       top: MediaQuery.of(context).size.height * widget.top - (widget.size / 2),
       left: MediaQuery.of(context).size.width * widget.left - (widget.size / 2),
@@ -237,31 +272,7 @@ class _FloatingOrbState extends State<FloatingOrb>
             if (!_controller.isAnimating) _controller.repeat();
           }
         },
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _translateY.value),
-              child: Transform.scale(
-                scale: _scale.value,
-                child: Opacity(opacity: _opacity.value, child: child),
-              ),
-            );
-          },
-          child: IgnorePointer(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-              child: Container(
-                width: widget.size,
-                height: widget.size,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFF6366F1),
-                ),
-              ),
-            ),
-          ),
-        ),
+        child: content,
       ),
     );
   }
