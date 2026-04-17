@@ -8,6 +8,7 @@ import 'package:toolshub/features/home/widgets/top_nav_bar.dart';
 import 'package:toolshub/features/bookmarks/screens/bookmarks_screen.dart';
 import 'package:toolshub/features/profile/screens/profile_screen.dart';
 import 'package:toolshub/features/trending/screens/trending_screen.dart';
+import 'package:toolshub/features/ai_assistant/screens/ai_assistant_screen.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 
@@ -68,6 +69,8 @@ class _AppShellState extends State<AppShell> {
         return const BookmarksScreen();
       case 4:
         return const TrendingScreen();
+      case 5:
+        return const AiAssistantScreen();
       default:
         return const HomeScreen();
     }
@@ -102,6 +105,7 @@ class _AppShellState extends State<AppShell> {
                 // ── Nav Links ────────────────────────────────────────
                 _buildDrawerLink('Dashboard', Icons.dashboard_outlined, 0),
                 _buildDrawerLink('Categories', Icons.category_outlined, 1),
+                _buildDrawerLink('AI Assistant', Icons.smart_toy_outlined, 5),
                 if (auth.isLoggedIn)
                   _buildDrawerLink('Profile', Icons.person_outline_rounded, 2),
                 Consumer<BookmarkProvider>(

@@ -54,7 +54,7 @@ class FourStepsSection extends StatelessWidget {
                     width: isMobile ? double.infinity : wrapWidth / 4,
                     icon: Icons.search_rounded,
                     title: 'Search or Browse',
-                    desc: 'Explore our directory by category, use case, or keyword. Every tool is organized for fast discovery.'),
+                    desc: 'Explore our directory by category, use case, or keyword. Every tool is organized to help you find the right stack for your job.'),
                 _StepItem(
                     index: 2,
                     width: isMobile ? double.infinity : wrapWidth / 4,

@@ -50,7 +50,7 @@ class DiscoveryEngineSection extends StatelessWidget {
         SizedBox(
           width: 500,
           child: Text(
-            'Pick tools with confidence using category-based discovery, clearer comparison, and simple shortlisting before paid signup.',
+            'Pick tools with confidence, clearer comparison, and simple shortlisting to find the right stack for your job.',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 16,
