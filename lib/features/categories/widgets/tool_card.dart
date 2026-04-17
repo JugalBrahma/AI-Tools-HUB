@@ -252,7 +252,7 @@ class _ToolCardState extends State<ToolCard> {
                     const SizedBox(height: 4),
                     Text(
                       tool.description,
-                      maxLines: 3,
+                      maxLines: MediaQuery.of(context).size.width < 600 ? 2 : 3,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 11,
@@ -325,22 +325,27 @@ class _ToolCardState extends State<ToolCard> {
                       ),
                     ),
                     const Spacer(),
-                    Material(
-                      color: tc,
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        onTap: _launchUrl,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          width: double.infinity,
-                          height: 34,
-                          child: Center(
-                            child: Text(
-                              'Try it now',
-                              style: GoogleFonts.inter(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
+                        child: Material(
+                          color: tc,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: _launchUrl,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              width: double.infinity,
+                              height: 34,
+                              child: Center(
+                                child: Text(
+                                  'Try it now',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

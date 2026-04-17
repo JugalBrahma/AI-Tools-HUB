@@ -179,9 +179,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.all(screenWidth < 600 ? 16 : 24),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(screenWidth < 600 ? 16 : 20),
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -190,47 +190,49 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       border: Border.all(color: const Color(0xFF1D2230)),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: screenWidth < 600 ? 36 : 44,
+                          height: screenWidth < 600 ? 36 : 44,
                           decoration: BoxDecoration(
                             color: const Color(0xFF00D4AA).withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(screenWidth < 600 ? 10 : 12),
                             border: Border.all(
                               color: const Color(0xFF00D4AA).withOpacity(0.28),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.apps_rounded,
-                            color: Color(0xFF00D4AA),
-                            size: 22,
+                            color: const Color(0xFF00D4AA),
+                            size: screenWidth < 600 ? 18 : 22,
                           ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'Browse AI Categories',
                                 textAlign: TextAlign.left,
                                 style: GoogleFonts.inter(
-                                  fontSize: screenWidth < 600 ? 22 : 30,
+                                  fontSize: screenWidth < 600 ? 18 : 30,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                   letterSpacing: -0.6,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4),
                               Text(
                                 screenWidth < 400
                                     ? '${categories.length} categories • ${categories.fold<int>(0, (sum, c) => sum + c.tools.length)} tools'
                                     : '${categories.length} categories • ${categories.fold<int>(0, (sum, c) => sum + c.tools.length)} tools indexed',
                                 style: GoogleFonts.inter(
-                                  fontSize: screenWidth < 600 ? 11 : 13,
+                                  fontSize: screenWidth < 600 ? 10 : 13,
                                   color: const Color(0xFF8C93A8),
-                                  height: screenWidth < 600 ? 1.3 : 1.5,
+                                  height: 1.3,
                                 ),
                               ),
                             ],

@@ -25,7 +25,7 @@ class ToolSliverGrid extends StatelessWidget {
             crossAxisCount: crossCount,
             mainAxisSpacing: 14,
             crossAxisSpacing: 14,
-            childAspectRatio: 0.75,
+            childAspectRatio: w < 600 ? 0.95 : 0.75,
           ),
           delegate: SliverChildBuilderDelegate(
             (context, i) => ToolCard(tool: tools[i], themeColor: themeColor),
