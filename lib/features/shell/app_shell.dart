@@ -41,32 +41,36 @@ class _AppShellState extends State<AppShell> {
             onMenuTap: () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
           Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: [
-                TickerMode(enabled: _currentIndex == 0, child: const HomeScreen()),
-                TickerMode(
-                  enabled: _currentIndex == 1,
-                  child: const CategoriesPage(),
-                ),
-                TickerMode(
-                  enabled: _currentIndex == 2,
-                  child: const ProfileScreen(),
-                ),
-                TickerMode(
-                  enabled: _currentIndex == 3,
-                  child: const BookmarksScreen(),
-                ),
-                TickerMode(
-                  enabled: _currentIndex == 4,
-                  child: const TrendingScreen(),
-                ),
-              ],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: KeyedSubtree(
+                key: ValueKey<int>(_currentIndex),
+                child: _buildCurrentPage(),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildCurrentPage() {
+    switch (_currentIndex) {
+      case 0:
+        return const HomeScreen();
+      case 1:
+        return const CategoriesPage();
+      case 2:
+        return const ProfileScreen();
+      case 3:
+        return const BookmarksScreen();
+      case 4:
+        return const TrendingScreen();
+      default:
+        return const HomeScreen();
+    }
   }
 
   Widget _buildRightDrawer() {

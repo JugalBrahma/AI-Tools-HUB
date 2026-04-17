@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +7,7 @@ import 'package:toolshub/core/providers/trending_provider.dart';
 import 'package:toolshub/features/home/widgets/animated_background.dart';
 import 'package:toolshub/features/categories/widgets/logo_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -95,43 +95,101 @@ Future<void> _openUrl(String raw) async {
 // Main Screen
 // ─────────────────────────────────────────────────────────────────────────────
 
-class TrendingScreen extends StatelessWidget {
+class TrendingScreen extends StatefulWidget {
   const TrendingScreen({super.key});
+
+  @override
+  State<TrendingScreen> createState() => _TrendingScreenState();
+}
+
+class _TrendingScreenState extends State<TrendingScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     final tp = context.watch<TrendingProvider>();
-    return AnimatedGridBackground(
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          scrollbars: false,
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-            PointerDeviceKind.trackpad,
-          },
-        ),
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1300),
+    final isMobile = MediaQuery.of(context).size.width < 900;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Colors.transparent,
+      drawer: isMobile
+          ? Drawer(
+              backgroundColor: const Color(0xFF0D0E14),
+              width: 280,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 48),
-                    _TrendingHeader(),
-                    const SizedBox(height: 40),
-                    if (tp.isLoading)
-                      const _LoadingState()
-                    else
-                      _BentoGrid(tp: tp),
-                    const SizedBox(height: 80),
-                  ],
+                padding: const EdgeInsets.symmetric(
+                  vertical: 48,
+                  horizontal: 16,
+                ),
+                child: _CategorySidebar(onClose: () => Navigator.pop(context)),
+              ),
+            )
+          : null,
+      body: AnimatedGridBackground(
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false,
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+            },
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left Sidebar (Hidden on mobile)
+              if (!isMobile) ...[
+                const SizedBox(
+                  width: 280,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+                    child: _CategorySidebar(),
+                  ),
+                ),
+                // Subtle Vertical Divider
+                Container(width: 1, color: Colors.white.withOpacity(0.05)),
+              ],
+
+              // Content Area
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 48,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ScrollReveal(
+                              child: _TrendingHeader(
+                                onMenuPressed: isMobile
+                                    ? () => _scaffoldKey.currentState
+                                          ?.openDrawer()
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                            ScrollReveal(
+                              delay: 0.1,
+                              child: tp.isLoading
+                                  ? const _LoadingState()
+                                  : _BentoGrid(tp: tp),
+                            ),
+                            const SizedBox(height: 80),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -140,41 +198,55 @@ class TrendingScreen extends StatelessWidget {
 }
 
 class _TrendingHeader extends StatelessWidget {
+  final VoidCallback? onMenuPressed;
+  const _TrendingHeader({this.onMenuPressed});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: BoxDecoration(
-            color: _kAccentGreen.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: _kAccentGreen.withOpacity(0.25)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: _kAccentGreen,
-                  shape: BoxShape.circle,
-                ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: _kAccentGreen.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: _kAccentGreen.withOpacity(0.25)),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'INTELLIGENCE BRIEFING',
-                style: GoogleFonts.ibmPlexMono(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: _kAccentGreen,
-                  letterSpacing: 2.0,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: _kAccentGreen,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'INTELLIGENCE BRIEFING',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: _kAccentGreen,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            if (onMenuPressed != null)
+              IconButton(
+                onPressed: onMenuPressed,
+                icon: const Icon(Icons.menu_rounded, color: Colors.white70),
+                tooltip: 'Open Categories',
+              ),
+          ],
         ),
         const SizedBox(height: 20),
         ShaderMask(
@@ -317,7 +389,9 @@ class _MobileGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: _bentoCategories.asMap().entries.map((e) {
-        final style = e.key % 2 == 0
+        final style = e.key == 0
+            ? _BentoStyle.featuredWide
+            : e.key % 2 == 0
             ? _BentoStyle.compactTall
             : _BentoStyle.imageTall;
         return Padding(
@@ -359,7 +433,7 @@ class _TrendingBentoCardState extends State<_TrendingBentoCard> {
   @override
   Widget build(BuildContext context) {
     if (widget.entries.isEmpty) return const SizedBox();
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -429,6 +503,7 @@ class _GridPainter extends CustomPainter {
       canvas.drawLine(Offset(0, i), Offset(size.width, i), p);
     }
   }
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
@@ -444,32 +519,19 @@ class _StyleFeaturedWide extends StatelessWidget {
     final others = entries.skip(1).take(4).toList();
     return Column(
       children: [
-        _BentoHeader(cat: cat, actionLabel: 'SYSTEM_ANALYSIS_V2'),
+        _BentoHeader(cat: cat),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
-              Expanded(
-                flex: 4,
-                child: _HeroFeatureCard(entry: hero, color: cat.color),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                flex: 5,
-                child: Column(
-                  children: others
-                      .asMap()
-                      .entries
-                      .map(
-                        (e) => _DetailedRankRow(
-                          entry: e.value,
-                          color: cat.color,
-                          rank: e.key + 2,
-                          isLast: e.key == others.length - 1,
-                        ),
-                      )
-                      .toList(),
+              _HeroFeatureCard(entry: hero, color: cat.color),
+              const SizedBox(height: 16),
+              ...others.asMap().entries.map(
+                (e) => _DetailedRankRow(
+                  entry: e.value,
+                  color: cat.color,
+                  rank: e.key + 2,
+                  isLast: e.key == others.length - 1,
                 ),
               ),
             ],
@@ -487,57 +549,35 @@ class _StyleImageTall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hero = entries.first;
+    final others = entries.skip(1).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _BentoHeader(cat: cat),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cat.color.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: cat.color.withOpacity(0.1)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.auto_awesome_rounded, color: cat.color, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  'PRIMARY_NODE: ${entries.first.name.toUpperCase()}',
-                  style: GoogleFonts.ibmPlexMono(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: cat.color,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: _HeroFeatureCard(entry: hero, color: cat.color, compact: true),
         ),
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
-            children: entries
+            children: others
                 .asMap()
                 .entries
                 .map(
                   (e) => _DetailedRankRow(
                     entry: e.value,
                     color: cat.color,
-                    rank: e.key + 1,
-                    isLast: e.key == entries.length - 1,
+                    rank: e.key + 2,
+                    isLast: e.key == others.length - 1,
                     compact: true,
                   ),
                 )
                 .toList(),
           ),
         ),
-        const SizedBox(height: 24),
-        _BentoBigButton(label: 'INITIALIZE FULL SCAN', color: cat.color),
       ],
     );
   }
@@ -579,8 +619,6 @@ class _StyleCompactTall extends StatelessWidget {
                 .toList(),
           ),
         ),
-        const SizedBox(height: 24),
-        _BentoBigButton(label: 'ACCESS_DATABASE', color: cat.color),
       ],
     );
   }
@@ -784,19 +822,6 @@ class _HeroFeatureCard extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            if (!compact) ...[
-              const SizedBox(height: 24),
-              // Technical Telemetry
-              Row(
-                children: [
-                  _TechMetric(label: 'ACCURACY', value: '98.2%', color: color),
-                  const SizedBox(width: 24),
-                  _TechMetric(label: 'LATENCY', value: '104MS', color: color),
-                  const SizedBox(width: 24),
-                  _TechMetric(label: 'UPTIME', value: '99.9%', color: color),
-                ],
-              ),
-            ],
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -833,7 +858,11 @@ class _TechMetric extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _TechMetric({required this.label, required this.value, required this.color});
+  const _TechMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -884,7 +913,11 @@ class _DetailedRankRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          border: isLast ? null : Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04))),
+          border: isLast
+              ? null
+              : Border(
+                  bottom: BorderSide(color: Colors.white.withOpacity(0.04)),
+                ),
         ),
         child: Row(
           children: [
@@ -923,62 +956,15 @@ class _DetailedRankRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      _Badge(
-                        label: 'VERIFIED',
-                        color: Colors.white.withOpacity(0.2),
-                      ),
-                      const SizedBox(width: 8),
-                      // Mini Sentiment Meter
-                      Container(
-                        width: 40,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                        child: FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: 0.9 - (rank * 0.1),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
-            if (!compact) ...[
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '+${(15 - rank)}%',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                  Text(
-                    'GROWTH',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 8,
-                      color: Colors.white24,
-                    ),
-                  ),
-                ],
-              ),
-            ],
             const SizedBox(width: 12),
-            Icon(Icons.chevron_right_rounded, color: Colors.white.withOpacity(0.2), size: 18),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white.withOpacity(0.2),
+              size: 18,
+            ),
           ],
         ),
       ),
@@ -1062,8 +1048,9 @@ class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: List.generate(3, (i) => 
-        Padding(
+      children: List.generate(
+        3,
+        (i) => Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: Container(
             height: 300,
@@ -1077,9 +1064,19 @@ class _LoadingState extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: _kAccentGreen, strokeWidth: 2),
+                  CircularProgressIndicator(
+                    color: _kAccentGreen,
+                    strokeWidth: 2,
+                  ),
                   SizedBox(height: 16),
-                  Text('POLLING_DATABASE...', style: TextStyle(color: Colors.white24, fontSize: 10, letterSpacing: 2)),
+                  Text(
+                    'POLLING_DATABASE...',
+                    style: TextStyle(
+                      color: Colors.white24,
+                      fontSize: 10,
+                      letterSpacing: 2,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1090,3 +1087,148 @@ class _LoadingState extends StatelessWidget {
   }
 }
 
+class _CategorySidebar extends StatelessWidget {
+  final VoidCallback? onClose;
+  const _CategorySidebar({this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    const categories = [
+      ('AI Trendings', Icons.auto_awesome_rounded, true),
+      ('Students', Icons.school_rounded, false),
+      ('Business', Icons.business_center_rounded, false),
+      ('Content', Icons.draw_rounded, false),
+      ('Growth', Icons.trending_up_rounded, false),
+      ('Lifestyle', Icons.spa_rounded, false),
+    ];
+
+    return Column(
+      children: [
+        if (onClose != null) ...[
+          Row(
+            children: [
+              const Spacer(),
+              IconButton(
+                onPressed: onClose,
+                icon: const Icon(Icons.close_rounded, color: Colors.white38),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+        ...categories.map(
+          (cat) => _SidebarItem(title: cat.$1, icon: cat.$2, isActive: cat.$3),
+        ),
+        const SizedBox(height: 32),
+        // Premium Support Card or similar
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF00FFD1).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'LIVE_TELEMETRY',
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF00FFD1),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Real-time indexing of new deployment nodes.',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white38,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SidebarItem extends StatefulWidget {
+  final String title;
+  final IconData icon;
+  final bool isActive;
+
+  const _SidebarItem({
+    required this.title,
+    required this.icon,
+    this.isActive = false,
+  });
+
+  @override
+  State<_SidebarItem> createState() => _SidebarItemState();
+}
+
+class _SidebarItemState extends State<_SidebarItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: widget.isActive
+              ? const Color(0xFF00FFD1).withOpacity(0.08)
+              : _isHovered
+              ? Colors.white.withOpacity(0.03)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: widget.isActive
+                ? const Color(0xFF00FFD1).withOpacity(0.2)
+                : _isHovered
+                ? Colors.white.withOpacity(0.05)
+                : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              widget.icon,
+              size: 20,
+              color: widget.isActive ? const Color(0xFF00FFD1) : Colors.white38,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              widget.title,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: widget.isActive ? FontWeight.w800 : FontWeight.w600,
+                color: widget.isActive ? Colors.white : Colors.white60,
+              ),
+            ),
+            if (widget.isActive) ...[
+              const Spacer(),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF00FFD1),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

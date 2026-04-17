@@ -58,13 +58,12 @@ class _AnimatedGridBackgroundState extends State<AnimatedGridBackground> {
 
           // ── Floating Orbs ─────────────────────────────────────────────────
           const FloatingOrb(delay: 0, size: 300, top: 0.2, left: 0.1),
-          if (!kIsWeb) const FloatingOrb(delay: 2, size: 200, top: 0.1, left: 0.75),
+          const FloatingOrb(delay: 2, size: 200, top: 0.1, left: 0.75),
           const FloatingOrb(delay: 4, size: 250, top: 0.6, left: 0.6),
-          if (!kIsWeb) const FloatingOrb(delay: 1, size: 180, top: 0.7, left: 0.2),
+          const FloatingOrb(delay: 1, size: 180, top: 0.7, left: 0.2),
 
           // ── Mouse Glow (Optimized with ValueListenableBuilder) ────────────
-          if (!kIsWeb)
-            ValueListenableBuilder<Offset>(
+          ValueListenableBuilder<Offset>(
               valueListenable: _mousePosition,
               builder: (context, pos, child) {
                 return AnimatedPositioned(
