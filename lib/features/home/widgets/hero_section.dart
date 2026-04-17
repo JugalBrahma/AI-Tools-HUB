@@ -48,11 +48,11 @@ class HeroSection extends StatelessWidget {
                 'Find The Right\nAI Tool Faster',
                 textAlign: isMobile ? TextAlign.left : TextAlign.center,
                 style: GoogleFonts.inter(
-                  fontSize: isMobile ? 48 : 84,
+                  fontSize: isMobile ? 36 : 84,
                   height: 0.95,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
-                  letterSpacing: isMobile ? -1.0 : -3.0,
+                  letterSpacing: isMobile ? -0.5 : -3.0,
                 ),
               ),
             ),
@@ -61,7 +61,7 @@ class HeroSection extends StatelessWidget {
             // ── Description + green dot ───────────────────────────────
             SizedBox(
               width: isMobile
-                  ? constraints.maxWidth * 0.85
+                  ? double.infinity
                   : isNarrowing
                   ? 320
                   : 460,
@@ -82,22 +82,28 @@ class HeroSection extends StatelessWidget {
               mainAxisAlignment: isMobile
                   ? MainAxisAlignment.start
                   : MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF38D56A),
-                    shape: BoxShape.circle,
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF38D56A),
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Numbers shown below come from your live catalog',
-                  style: GoogleFonts.ibmPlexMono(
-                    fontSize: 10,
-                    color: const Color(0xFF38D56A),
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    'Numbers shown below come from your live catalog',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 10,
+                      color: const Color(0xFF38D56A),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

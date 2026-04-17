@@ -143,13 +143,16 @@ class CtaSection extends StatelessWidget {
   }
 
   Widget _buildMeta() {
-    return Text(
-      'REAL DATA  •  PRACTICAL EVALUATION  •  NO HYPE METRICS',
-      style: GoogleFonts.ibmPlexMono(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: Colors.white24,
-        letterSpacing: 1.1,
+    return Center(
+      child: Text(
+        'REAL DATA  •  PRACTICAL EVALUATION  •  NO HYPE METRICS',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: Colors.white24,
+          letterSpacing: 1.1,
+        ),
       ),
     );
   }

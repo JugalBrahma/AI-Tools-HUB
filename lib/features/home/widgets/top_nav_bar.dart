@@ -15,6 +15,9 @@ class TopNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.sizeOf(context).width;
+    final bool isPhone = width < 600;
+
     return Container(
       height: 70,
       decoration: const BoxDecoration(
@@ -23,7 +26,7 @@ class TopNavBar extends StatelessWidget {
       ),
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: EdgeInsets.symmetric(horizontal: isPhone ? 20 : 40),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

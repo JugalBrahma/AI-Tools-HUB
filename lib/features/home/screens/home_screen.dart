@@ -27,6 +27,10 @@ class HomeScreen extends StatelessWidget {
         .where((t) => t.logo.trim().isNotEmpty)
         .length;
 
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    final bool isPhone = screenWidth < 600;
+    final double horizontalPadding = isPhone ? 20 : 40;
+
     return AnimatedGridBackground(
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
@@ -42,7 +46,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -53,13 +57,13 @@ class HomeScreen extends StatelessWidget {
                           logoCount: toolsWithLogo,
                         ),
                       ),
-                      const SizedBox(height: 100),
+                      SizedBox(height: isPhone ? 60 : 100),
                       const ScrollReveal(delay: 0.2, child: CategoryRow()),
-                      const SizedBox(height: 120),
+                      SizedBox(height: isPhone ? 80 : 120),
                       const PopularToolsGrid(),
-                      const SizedBox(height: 120),
+                      SizedBox(height: isPhone ? 80 : 120),
                       const LandingContent(),
-                      const SizedBox(height: 120),
+                      SizedBox(height: isPhone ? 80 : 120),
                       const Footer(),
                       const SizedBox(height: 40),
                     ],

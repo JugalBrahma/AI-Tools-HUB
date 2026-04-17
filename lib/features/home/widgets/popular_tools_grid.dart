@@ -74,7 +74,7 @@ class PopularToolsGrid extends StatelessWidget {
                         Text(
                           'Top Rated AI Tools',
                           style: GoogleFonts.inter(
-                            fontSize: 40,
+                            fontSize: width < 600 ? 28 : 40,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                             letterSpacing: -1.5,
@@ -84,7 +84,7 @@ class PopularToolsGrid extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 64),
+                SizedBox(height: width < 600 ? 32 : 64),
 
                 if (featuredTools.isEmpty)
                   _EmptyFeaturedState(isLoading: toolProvider.isLoading)
@@ -162,7 +162,10 @@ class PopularToolsGrid extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 24),
           child: ScrollReveal(
             delay: index * 0.1,
-            child: _PopularToolCard(tool: tools[index], index: index),
+            child: SizedBox(
+              height: 180,
+              child: _PopularToolCard(tool: tools[index], index: index),
+            ),
           ),
         ),
       ),

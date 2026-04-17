@@ -111,14 +111,15 @@ class _CategoriesPageState extends State<CategoriesPage> {
                               controller: _searchController,
                               style: GoogleFonts.inter(
                                 color: Colors.white,
-                                fontSize: 14,
+                                fontSize: 13,
                               ),
                               decoration: InputDecoration(
-                                hintText:
-                                    'Search tools, categories, use cases...',
+                                hintText: screenWidth < 450
+                                    ? 'Search tools...'
+                                    : 'Search tools, categories, use cases...',
                                 hintStyle: GoogleFonts.inter(
                                   color: const Color(0xFF333340),
-                                  fontSize: 14,
+                                  fontSize: 13,
                                 ),
                                 border: InputBorder.none,
                                 isDense: true,
@@ -215,7 +216,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                 'Browse AI Categories',
                                 textAlign: TextAlign.left,
                                 style: GoogleFonts.inter(
-                                  fontSize: 30,
+                                  fontSize: screenWidth < 600 ? 22 : 30,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                   letterSpacing: -0.6,
@@ -223,11 +224,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                '${categories.length} categories • ${categories.fold<int>(0, (sum, c) => sum + c.tools.length)} tools indexed',
+                                screenWidth < 400
+                                    ? '${categories.length} categories • ${categories.fold<int>(0, (sum, c) => sum + c.tools.length)} tools'
+                                    : '${categories.length} categories • ${categories.fold<int>(0, (sum, c) => sum + c.tools.length)} tools indexed',
                                 style: GoogleFonts.inter(
-                                  fontSize: 13,
+                                  fontSize: screenWidth < 600 ? 11 : 13,
                                   color: const Color(0xFF8C93A8),
-                                  height: 1.5,
+                                  height: screenWidth < 600 ? 1.3 : 1.5,
                                 ),
                               ),
                             ],

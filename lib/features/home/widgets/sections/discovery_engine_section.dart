@@ -161,7 +161,7 @@ class _DiscoveryCardState extends State<_DiscoveryCard> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
         width: widget.width,
-        height: 240,
+        constraints: const BoxConstraints(minHeight: 240),
         decoration: BoxDecoration(
           color: const Color(0xFF0D0D0F).withOpacity(0.8),
           borderRadius: BorderRadius.circular(24),
@@ -186,82 +186,147 @@ class _DiscoveryCardState extends State<_DiscoveryCard> {
                   color: widget.color.withOpacity(0.04),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(32),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 6,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: widget.color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Icon(
-                              widget.icon,
-                              color: widget.color,
-                              size: 20,
-                            ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: constraints.maxWidth < 450
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: widget.color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  widget.icon,
+                                  color: widget.color,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                widget.title,
+                                style: GoogleFonts.inter(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                widget.desc,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.white38,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.stat,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    widget.statLabel,
+                                    style: GoogleFonts.ibmPlexMono(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w700,
+                                      color: widget.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 6,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: widget.color.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: Icon(
+                                        widget.icon,
+                                        color: widget.color,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      widget.title,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      widget.desc,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        height: 1.6,
+                                        color: Colors.white38,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 4,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      widget.stat,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.statLabel,
+                                      textAlign: TextAlign.right,
+                                      style: GoogleFonts.ibmPlexMono(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w700,
+                                        color: widget.color,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 24),
-                          Text(
-                            widget.title,
-                            style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            widget.desc,
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              height: 1.6,
-                              color: Colors.white38,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const SizedBox(height: 8),
-                          Text(
-                            widget.stat,
-                            style: GoogleFonts.inter(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.statLabel,
-                            textAlign: TextAlign.right,
-                            style: GoogleFonts.ibmPlexMono(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                              color: widget.color,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),

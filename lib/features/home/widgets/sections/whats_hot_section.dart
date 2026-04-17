@@ -127,12 +127,16 @@ class _TrendingRowState extends State<_TrendingRow> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmall = screenWidth < 500;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+        padding: EdgeInsets.symmetric(
+            vertical: 16, horizontal: isSmall ? 10 : 24),
         decoration: BoxDecoration(
           color: _hover ? Colors.white.withOpacity(0.03) : Colors.transparent,
           border: Border(
@@ -142,35 +146,37 @@ class _TrendingRowState extends State<_TrendingRow> {
         child: Row(
           children: [
             SizedBox(
-              width: 40,
+              width: 30,
               child: Text(
                 widget.rank,
                 style: GoogleFonts.ibmPlexMono(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: _hover ? const Color(0xFFFF9900) : Colors.white24,
                 ),
               ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 12),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     widget.category.toUpperCase(),
                     style: GoogleFonts.ibmPlexMono(
-                      fontSize: 10,
+                      fontSize: 9,
                       color: Colors.white38,
                       letterSpacing: 1.0,
                     ),
@@ -178,39 +184,43 @@ class _TrendingRowState extends State<_TrendingRow> {
                 ],
               ),
             ),
-            const Spacer(),
-            Expanded(
-              flex: 1,
-              child: Text(
-                widget.users,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white54,
+            if (!isSmall) ...[
+              const Spacer(),
+              Expanded(
+                flex: 1,
+                child: Text(
+                  widget.users,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white54,
+                  ),
                 ),
               ),
-            ),
+            ],
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFF00FFD1).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 widget.growth,
                 style: GoogleFonts.ibmPlexMono(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF00FFD1),
                 ),
               ),
             ),
-            const SizedBox(width: 20),
-            Icon(
-              Icons.trending_up_rounded,
-              size: 18,
-              color: const Color(0xFF00FFD1).withOpacity(0.5),
-            ),
+            if (!isSmall) ...[
+              const SizedBox(width: 16),
+              Icon(
+                Icons.trending_up_rounded,
+                size: 16,
+                color: const Color(0xFF00FFD1).withOpacity(0.5),
+              ),
+            ],
           ],
         ),
       ),
