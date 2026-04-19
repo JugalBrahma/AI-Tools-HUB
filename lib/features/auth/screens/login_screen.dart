@@ -17,7 +17,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool _loading = false;
+  bool _isLoginMode = true;
   String? _error;
+
+  final TextEditingController _emailCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
+  final TextEditingController _nameCtrl = TextEditingController();
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -50,6 +55,9 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _authSub?.cancel();
     _animCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _nameCtrl.dispose();
     super.dispose();
   }
 
@@ -57,6 +65,34 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() { _loading = true; _error = null; });
     final auth = context.read<app_auth.AuthProvider>();
     final error = await auth.signInWithGoogle();
+    if (!mounted) return;
+    if (error != null) {
+      setState(() { _error = error; _loading = false; });
+    } else {
+      widget.onDismiss?.call();
+    }
+  }
+
+  Future<void> _handleEmailAuth() async {
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
+    final name = _nameCtrl.text.trim();
+
+    if (email.isEmpty || password.isEmpty || (!_isLoginMode && name.isEmpty)) {
+      setState(() => _error = 'Please fill in all fields.');
+      return;
+    }
+
+    setState(() { _loading = true; _error = null; });
+    final auth = context.read<app_auth.AuthProvider>();
+    
+    String? error;
+    if (_isLoginMode) {
+      error = await auth.signInWithEmail(email, password);
+    } else {
+      error = await auth.signUpWithEmail(email, password, name);
+    }
+
     if (!mounted) return;
     if (error != null) {
       setState(() { _error = error; _loading = false; });
@@ -148,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
                               children: [
                                 // Heading
                                 Text(
-                                  'Welcome to Icon Hub',
+                                  _isLoginMode ? 'Welcome Back' : 'Create Account',
                                   style: GoogleFonts.inter(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w800,
@@ -158,7 +194,9 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Sign in to access your bookmarks\nand personalised AI tool recommendations.',
+                                  _isLoginMode 
+                                    ? 'Sign in to access your dashboard'
+                                    : 'Join AI Hub to start your journey',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
@@ -191,21 +229,78 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ],
 
-                                // Google Sign-In button
-                                _loading
-                                    ? const Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 16),
-                                        child: CircularProgressIndicator(color: Color(0xFF4A89FF), strokeWidth: 2),
-                                      )
-                                    : _GoogleButton(onTap: _signInWithGoogle),
+                                // ── Text Fields ──────────────────────────────────
+                                if (!_isLoginMode) ...[
+                                  _CustomTextField(
+                                    controller: _nameCtrl,
+                                    hintText: 'Full Name',
+                                    icon: Icons.person_outline_rounded,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                                _CustomTextField(
+                                  controller: _emailCtrl,
+                                  hintText: 'Email Address',
+                                  icon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 16),
+                                _CustomTextField(
+                                  controller: _passwordCtrl,
+                                  hintText: 'Password',
+                                  icon: Icons.lock_outline_rounded,
+                                  isPassword: true,
+                                ),
 
                                 const SizedBox(height: 24),
 
-                                // Footer note
-                                Text(
-                                  'By signing in you agree to our Terms of Service\nand Privacy Policy.',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF444455), height: 1.6),
+                                // Main Action Button
+                                _loading
+                                    ? const CircularProgressIndicator(color: Color(0xFF4A89FF), strokeWidth: 2)
+                                    : _PrimaryButton(
+                                        text: _isLoginMode ? 'Sign In' : 'Create Account',
+                                        onTap: _handleEmailAuth,
+                                      ),
+
+                                const SizedBox(height: 20),
+
+                                // Divider
+                                Row(
+                                  children: [
+                                    Expanded(child: Divider(color: const Color(0xFF1C1C2E))),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text('OR', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF444455), fontWeight: FontWeight.bold)),
+                                    ),
+                                    Expanded(child: Divider(color: const Color(0xFF1C1C2E))),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                // Google Sign-In button
+                                _GoogleButton(onTap: _signInWithGoogle),
+
+                                const SizedBox(height: 24),
+
+                                // Toggle Mode
+                                GestureDetector(
+                                  onTap: () => setState(() {
+                                    _isLoginMode = !_isLoginMode;
+                                    _error = null;
+                                  }),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF666677)),
+                                      children: [
+                                        TextSpan(text: _isLoginMode ? 'New here? ' : 'Already have an account? '),
+                                        TextSpan(
+                                          text: _isLoginMode ? 'Create account' : 'Sign in',
+                                          style: const TextStyle(color: Color(0xFF4A89FF), fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -224,7 +319,89 @@ class _LoginScreenState extends State<LoginScreen>
   }
 }
 
-// ── Google Sign-In Button ─────────────────────────────────────────────────────
+// ── Components ──────────────────────────────────────────────────────────────
+
+class _CustomTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final IconData icon;
+  final bool isPassword;
+  final TextInputType? keyboardType;
+
+  const _CustomTextField({
+    required this.controller,
+    required this.hintText,
+    required this.icon,
+    this.isPassword = false,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E0E18),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF1C1C2C)),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword,
+        keyboardType: keyboardType,
+        style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: GoogleFonts.inter(color: const Color(0xFF444455), fontSize: 14),
+          prefixIcon: Icon(icon, color: const Color(0xFF444455), size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+
+  const _PrimaryButton({required this.text, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF4A89FF).withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _GoogleButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -265,15 +442,15 @@ class _GoogleButtonState extends State<_GoogleButton> {
             children: [
               Image.network(
                 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
-                width: 22,
-                height: 22,
+                width: 18,
+                height: 18,
                 errorBuilder: (_, __, ___) => const Text('G', style: TextStyle(color: Color(0xFF4285F4), fontWeight: FontWeight.bold, fontSize: 16)),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Text(
                 'Continue with Google',
                 style: GoogleFonts.inter(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: _hovering ? Colors.white : Colors.white70,
                 ),

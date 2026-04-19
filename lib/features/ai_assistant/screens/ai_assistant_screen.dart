@@ -6,6 +6,8 @@ import 'package:toolshub/features/ai_assistant/models/assistant_api_models.dart'
 import 'package:toolshub/features/ai_assistant/services/assistant_api_service.dart';
 import 'package:toolshub/features/home/widgets/animated_background.dart';
 import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -18,14 +20,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final AssistantState _state = AssistantState();
   final AssistantApiService _apiService = AssistantApiService();
   final TextEditingController _promptController = TextEditingController();
-  
+
   bool _isLoading = false;
 
   Future<void> _generateStack() async {
     final goal = _promptController.text.trim();
     if (goal.isEmpty && _state.selections.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please provide some context or select filters.')),
+        const SnackBar(
+          content: Text('Please provide some context or select filters.'),
+        ),
       );
       return;
     }
@@ -35,14 +39,17 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     try {
       // ── Map UI to API Request ─────────────────────────────────────
       final request = AssistantRequest(
+        category: _state.selections['Category']?.toString() ?? 'Other',
         goal: goal,
-        budget: _state.selections['Budget']?.toString().toLowerCase() ?? 'not_sure',
-        teamSize: 'solo', // Default or mapped from a specific filter
-        mustHaveFeatures: List<String>.from(_state.selections['Must-haves'] ?? []),
-        preferredIntegrations: List<String>.from(_state.selections['Integrations'] ?? []),
-        priority: _state.selections['Priority']?.toString().toLowerCase() ?? 'balanced',
-        freshnessRequired: _state.selections['Latest info'] == 'Verify live',
+        budget: _state.selections['Budget']?.toString() ?? 'Not sure',
+        teamSize: _state.selections['Team Size']?.toString() ?? 'Solo',
+        mustHaveFeatures: List<String>.from(
+          _state.selections['Must-haves'] ?? [],
+        ),
+        priority:
+            _state.selections['Priority']?.toString() ?? 'Balanced / Other',
         avoid: List<String>.from(_state.selections['Avoid'] ?? []),
+        referenceTool: _state.selections['Reference Tool']?.toString(),
       );
 
       final response = await _apiService.getRecommendations(request);
@@ -64,9 +71,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       context: context,
       backgroundColor: const Color(0xFF030303),
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
+      constraints: const BoxConstraints(
+        maxWidth: 940,
+      ), // Even wider width for response stack comparisons
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
       builder: (context) => _ResultsSheet(response: response),
     );
   }
@@ -96,7 +104,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           AnimatedGridBackground(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 60,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 640),
                   child: Column(
@@ -137,7 +148,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFF0C0C10),
                             borderRadius: BorderRadius.circular(32),
-                            border: Border.all(color: const Color(0xFF1C1C22), width: 1.5),
+                            border: Border.all(
+                              color: const Color(0xFF1C1C22),
+                              width: 1.5,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.5),
@@ -151,17 +165,24 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                             children: [
                               _buildPromptInput(),
                               const SizedBox(height: 32),
-                              const Divider(color: Color(0xFF1C1C22), height: 1),
+                              const Divider(
+                                color: Color(0xFF1C1C22),
+                                height: 1,
+                              ),
                               const SizedBox(height: 24),
 
                               _buildFilterHeader('CORE REQUIREMENTS'),
                               const SizedBox(height: 12),
-                              _buildFilterScroll(_state.filters.take(3).toList()),
+                              _buildFilterScroll(
+                                _state.filters.take(4).toList(),
+                              ),
                               const SizedBox(height: 24),
 
                               _buildFilterHeader('SPECIFICATIONS'),
                               const SizedBox(height: 12),
-                              _buildFilterScroll(_state.filters.skip(3).toList()),
+                              _buildFilterScroll(
+                                _state.filters.skip(4).toList(),
+                              ),
                             ],
                           ),
                         ),
@@ -183,7 +204,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               ),
             ),
           ),
-          
+
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.4),
@@ -253,12 +274,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       scrollDirection: Axis.horizontal,
       clipBehavior: Clip.none,
       child: Row(
-        children: filters.map((f) => _FilterPill(
-          config: f,
-          enabled: !_isLoading,
-          currentValue: _state.selections[f.label],
-          onChanged: (val) => _onSelectionChanged(f, val),
-        )).toList(),
+        children: filters
+            .map(
+              (f) => _FilterPill(
+                config: f,
+                enabled: !_isLoading,
+                currentValue: _state.selections[f.label],
+                onChanged: (val) => _onSelectionChanged(f, val),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -273,13 +298,15 @@ class _ResultsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.9,
+      initialChildSize: 0.85,
+      minChildSize: 0.6,
+      maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => Container(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: const BoxDecoration(
+          color: Color(0xFF030303),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
           border: Border(top: BorderSide(color: Color(0xFF1C1C22), width: 1.5)),
         ),
         child: ListView(
@@ -287,40 +314,211 @@ class _ResultsSheet extends StatelessWidget {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(2)),
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-            Text('Generated AI Stack', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
             const SizedBox(height: 32),
-            
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Generated AI Stack',
+                        style: GoogleFonts.inter(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          _buildStatusBadge(
+                            response.confidenceLevel.toUpperCase(),
+                            response.confidenceLevel.toLowerCase() == 'high'
+                                ? const Color(0xFF00D4AA)
+                                : const Color(0xFFFFB800),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'CONFIDENCE',
+                            style: GoogleFonts.ibmPlexMono(
+                              fontSize: 10,
+                              color: Colors.white24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF14141C),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF24242A)),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Color(0xFF4A89FF),
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            if (response.missingInformation.isNotEmpty) ...[
+              _buildMissingInfoBanner(response.missingInformation),
+              const SizedBox(height: 32),
+            ],
+
             if (response.topPick != null) ...[
               _RecommendationCard(rec: response.topPick!, isTop: true),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
-            
+
             if (response.alternatives.isNotEmpty) ...[
-              Text('ALTERNATIVES', style: GoogleFonts.ibmPlexMono(fontSize: 10, color: Colors.white24, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ...response.alternatives.map((a) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _RecommendationCard(rec: a),
-              )),
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 16),
+                child: Text(
+                  'ALTERNATIVE TOOLS',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 11,
+                    color: Colors.white24,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              ...response.alternatives.map(
+                (a) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _RecommendationCard(rec: a),
+                ),
+              ),
             ],
-            
-            const SizedBox(height: 40),
+
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF14141C),
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF24242A))),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Color(0xFF1C1C22)),
+                ),
+                elevation: 0,
               ),
-              child: Text('Close Stack', style: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.w700)),
+              child: Text(
+                'Refine Request',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
             ),
+            const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMissingInfoBanner(List<String> items) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4A89FF).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF4A89FF).withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.info_outline,
+                color: Color(0xFF4A89FF),
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'REFINEMENT SUGGESTION',
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 10,
+                  color: const Color(0xFF4A89FF),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...items.map(
+            (info) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: CircleAvatar(
+                      radius: 2,
+                      backgroundColor: Color(0xFF4A89FF),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      info,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.white70,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -331,35 +529,339 @@ class _RecommendationCard extends StatelessWidget {
   final bool isTop;
   const _RecommendationCard({required this.rec, this.isTop = false});
 
+  Future<void> _launchToolUrl() async {
+    if (rec.url.isEmpty) return;
+    final url = Uri.parse(rec.url);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final primaryColor = isTop
+        ? const Color(0xFF00D4AA)
+        : const Color(0xFF4A89FF);
+
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isTop ? const Color(0xFF00D4AA).withOpacity(0.05) : const Color(0xFF0C0C10),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isTop ? const Color(0xFF00D4AA).withOpacity(0.3) : const Color(0xFF1C1C22)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(rec.toolName, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-              const Spacer(),
-              if (isTop)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFF00D4AA).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                  child: Text('TOP PICK', style: GoogleFonts.ibmPlexMono(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF00D4AA))),
+        color: const Color(0xFF0C0C10),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isTop
+              ? primaryColor.withOpacity(0.3)
+              : const Color(0xFF1C1C22),
+          width: 1.5,
+        ),
+        boxShadow: isTop
+            ? [
+                BoxShadow(
+                  color: primaryColor.withOpacity(0.05),
+                  blurRadius: 40,
+                  offset: const Offset(0, 10),
                 ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(rec.reason, style: GoogleFonts.inter(fontSize: 14, color: Colors.white54, height: 1.5)),
-        ],
+              ]
+            : [],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header Section ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: const Color(0xFF1C1C22).withOpacity(0.5),
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          rec.toolName,
+                          style: GoogleFonts.inter(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      if (isTop) _buildTopPickBadge(),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _launchToolUrl,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.link, size: 14, color: Colors.white24),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            rec.url
+                                .replaceFirst('https://', '')
+                                .replaceFirst('www.', ''),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: primaryColor.withOpacity(0.8),
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Body Section ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPriceSection(),
+                  const SizedBox(height: 24),
+
+                  _buildSectionTitle('WHY IT FITS'),
+                  const SizedBox(height: 8),
+                  Text(
+                    rec.whyItFits,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      color: Colors.white70,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      rec.fitScoreReason,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: primaryColor,
+                        fontWeight: FontWeight.w500,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('FOR THE BEST EXPERIENCE'),
+                  const SizedBox(height: 8),
+                  Text(
+                    rec.bestFor,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.white54,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  const Divider(color: Color(0xFF1C1C22)),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _buildWarningSection(
+                          'TRADEOFFS',
+                          rec.tradeoffs,
+                          Icons.compare_arrows,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildWarningSection(
+                          'CAUTION',
+                          rec.caution,
+                          Icons.warning_amber_rounded,
+                          isUrgent: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Footer Section ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              color: const Color(0xFF14141C),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.update,
+                    size: 14,
+                    color: _getFreshnessColor(rec.freshnessStatus),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'STATUS: ${rec.freshnessStatus.toUpperCase()}',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: _getFreshnessColor(rec.freshnessStatus),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  Tooltip(
+                    message: rec.evidenceSummary,
+                    triggerMode: TooltipTriggerMode.tap,
+                    child: const Icon(
+                      Icons.help_outline,
+                      size: 16,
+                      color: Colors.white24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildTopPickBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF00D4AA), Color(0xFF00BFA5)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        'TOP PICK',
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.ibmPlexMono(
+        fontSize: 10,
+        color: Colors.white24,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildPriceSection() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C22),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.payments_outlined,
+            size: 16,
+            color: Colors.white54,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PRICING',
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 9,
+                  color: Colors.white24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                rec.price,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWarningSection(
+    String title,
+    String content,
+    IconData icon, {
+    bool isUrgent = false,
+  }) {
+    final color = isUrgent ? const Color(0xFFFF4B4B) : Colors.white24;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: GoogleFonts.ibmPlexMono(
+                fontSize: 9,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          content,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: Colors.white54,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getFreshnessColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'verified':
+        return const Color(0xFF00D4AA);
+      case 'partly_verified':
+        return const Color(0xFFFFB800);
+      default:
+        return Colors.white24;
+    }
   }
 }
 
@@ -371,13 +873,23 @@ class _FilterPill extends StatelessWidget {
   final Function(dynamic) onChanged;
   final bool enabled;
 
-  const _FilterPill({required this.config, required this.currentValue, required this.onChanged, this.enabled = true});
+  const _FilterPill({
+    required this.config,
+    required this.currentValue,
+    required this.onChanged,
+    this.enabled = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    bool active = currentValue != null && (currentValue is! List || (currentValue as List).isNotEmpty);
-    String label = currentValue == null ? config.label 
-                   : (currentValue is List ? '${config.label} (${currentValue.length})' : currentValue.toString());
+    bool active =
+        currentValue != null &&
+        (currentValue is! List || (currentValue as List).isNotEmpty);
+    String label = currentValue == null
+        ? config.label
+        : (currentValue is List
+              ? '${config.label} (${currentValue.length})'
+              : currentValue.toString());
 
     return Padding(
       padding: const EdgeInsets.only(right: 10),
@@ -388,20 +900,41 @@ class _FilterPill extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: active ? const Color(0xFF4A89FF).withOpacity(0.1) : const Color(0xFF141418),
+            color: active
+                ? const Color(0xFF4A89FF).withOpacity(0.1)
+                : const Color(0xFF141418),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: active ? const Color(0xFF4A89FF).withOpacity(0.4) : const Color(0xFF24242A)),
+            border: Border.all(
+              color: active
+                  ? const Color(0xFF4A89FF).withOpacity(0.4)
+                  : const Color(0xFF24242A),
+            ),
           ),
           child: Opacity(
             opacity: enabled ? 1.0 : 0.4,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(config.icon, size: 14, color: active ? const Color(0xFF4A89FF) : Colors.white24),
+                Icon(
+                  config.icon,
+                  size: 14,
+                  color: active ? const Color(0xFF4A89FF) : Colors.white24,
+                ),
                 const SizedBox(width: 8),
-                Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: active ? FontWeight.w700 : FontWeight.w500, color: active ? Colors.white : Colors.white38)),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    color: active ? Colors.white : Colors.white38,
+                  ),
+                ),
                 const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: active ? const Color(0xFF4A89FF) : Colors.white10),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: active ? const Color(0xFF4A89FF) : Colors.white10,
+                ),
               ],
             ),
           ),
@@ -415,8 +948,14 @@ class _FilterPill extends StatelessWidget {
       context: context,
       backgroundColor: const Color(0xFF0A0A0F),
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-      builder: (context) => _FilterSheet(config: config, initialValue: currentValue, onSave: onChanged),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => _FilterSheet(
+        config: config,
+        initialValue: currentValue,
+        onSave: onChanged,
+      ),
     );
   }
 }
@@ -483,15 +1022,22 @@ class _FilterSheetState extends State<_FilterSheet> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           widget.config.description!,
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.white24),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.white24,
+                          ),
                         ),
                       ),
                   ],
                 ),
                 if (widget.config.type == SelectionType.multi)
                   TextButton(
-                    onPressed: () => setState(() => (_tempValue as List).clear()),
-                    child: Text('Clear All', style: GoogleFonts.inter(color: const Color(0xFF4A89FF))),
+                    onPressed: () =>
+                        setState(() => (_tempValue as List).clear()),
+                    child: Text(
+                      'Clear All',
+                      style: GoogleFonts.inter(color: const Color(0xFF4A89FF)),
+                    ),
                   ),
               ],
             ),
@@ -506,7 +1052,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     final isSelected = widget.config.type == SelectionType.multi
                         ? (_tempValue as List).contains(opt)
                         : _tempValue == opt;
-                        
+
                     return ChoiceChip(
                       label: Text(opt),
                       selected: isSelected,
@@ -531,13 +1077,17 @@ class _FilterSheetState extends State<_FilterSheet> {
                       selectedColor: const Color(0xFF4A89FF).withOpacity(0.2),
                       labelStyle: GoogleFonts.inter(
                         fontSize: 14,
-                        color: isSelected ? const Color(0xFF4A89FF) : Colors.white60,
+                        color: isSelected
+                            ? const Color(0xFF4A89FF)
+                            : Colors.white60,
                         fontWeight: FontWeight.w600,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                         side: BorderSide(
-                          color: isSelected ? const Color(0xFF4A89FF) : const Color(0xFF222230),
+                          color: isSelected
+                              ? const Color(0xFF4A89FF)
+                              : const Color(0xFF222230),
                         ),
                       ),
                       showCheckmark: false,
@@ -558,9 +1108,17 @@ class _FilterSheetState extends State<_FilterSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4A89FF),
                     padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: Text('Apply Selection', style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: Colors.white)),
+                  child: Text(
+                    'Apply Selection',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -600,22 +1158,33 @@ class _PremiumCTAState extends State<_PremiumCTA> {
           width: double.infinity,
           height: 64,
           decoration: BoxDecoration(
-            gradient: enabled 
-                ? const LinearGradient(colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)])
+            gradient: enabled
+                ? const LinearGradient(
+                    colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
+                  )
                 : null,
             color: enabled ? null : Colors.white12,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: enabled ? [
-              BoxShadow(
-                color: const Color(0xFF4A89FF).withOpacity(0.3),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ] : [],
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF4A89FF).withOpacity(0.3),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [],
           ),
           child: Center(
             child: widget.isLoading
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
                 : Text(
                     'Generate Custom Stack',
                     style: GoogleFonts.inter(

@@ -70,10 +70,15 @@ class AssistantState {
       options: ['VS Code', 'GitHub', 'Firebase', 'Figma', 'Notion', 'Slack', 'Google Drive', 'Other'],
     ),
     FilterConfig(
-      label: 'Latest info',
-      icon: Icons.verified_user_outlined,
-      type: SelectionType.toggle,
-      options: ['Verify live', 'General / Not sure'],
+      label: 'Team Size',
+      icon: Icons.people_outline,
+      options: ['Solo', 'Small Team (2-10)', 'Startup (10-50)', 'Enterprise'],
+    ),
+    FilterConfig(
+      label: 'Reference Tool',
+      icon: Icons.auto_awesome_motion_outlined,
+      options: ['Cursor', 'v0.dev', 'Bolt.new', 'Lovable.dev', 'Replit', 'ChatGPT', 'Claude', 'Midjourney', 'Linear', 'Notion', 'Other'],
+      description: 'A tool you already love or want something similar to',
     ),
     FilterConfig(
       label: 'Avoid',

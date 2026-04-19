@@ -9,7 +9,7 @@ class AssistantApiService {
   static const String _webhookUrl =
       'https://n8n.srv1563394.hstgr.cloud/webhook-test/ai-tool-recommend/';
   static const String _apiKey = '__n8n_BLANK_VALUE_e5362baf-c777-4d57-a609-6eaf1f9e87f6';
-  static const Duration _timeout = Duration(seconds: 30);
+  static const Duration _timeout = Duration(minutes: 3);
 
   /// Sends the prompt and filters to the n8n webhook.
   Future<AssistantResponse> getRecommendations(AssistantRequest request) async {
