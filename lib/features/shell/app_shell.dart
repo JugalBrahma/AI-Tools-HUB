@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:html' if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart' as html;
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:toolshub/features/auth/screens/login_screen.dart';
@@ -11,6 +13,7 @@ import 'package:toolshub/features/trending/screens/trending_screen.dart';
 import 'package:toolshub/features/ai_assistant/screens/ai_assistant_screen.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
+import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -22,6 +25,136 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkUrlForSuccess();
+      });
+    }
+  }
+
+  void _checkUrlForSuccess() {
+    final status = Uri.base.queryParameters['razorpay_payment_link_status'];
+    final paymentId = Uri.base.queryParameters['razorpay_payment_id'];
+
+    if (status == 'paid') {
+      print("---------------------------------------");
+      print("💰 STATUS: PAYMENT COMPLETED!");
+      print("📄 RECEIPT ID: $paymentId");
+      print("---------------------------------------");
+
+      _showSuccessDialog(paymentId ?? 'N/A');
+    }
+  }
+
+  void _showSuccessDialog(String paymentId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF111118),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: const Color(0xFF00D4AA).withOpacity(0.2)),
+        ),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00D4AA).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded,
+                  color: Color(0xFF00D4AA), size: 48),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Payment Successful!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Thank you for upgrading to Pro. Your membership is now active.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.white54,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Receipt ID',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white38,
+                    ),
+                  ),
+                  Text(
+                    paymentId,
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 12,
+                      color: const Color(0xFF00D4AA),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Clear URL parameters to prevent dialog from reappearing
+                html.window.history.replaceState(null, '', '/');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A89FF),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Got it',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _navigate(int index) {
     if (index == _currentIndex) return;
@@ -99,6 +232,8 @@ class _AppShellState extends State<AppShell> {
                 ),
 
                 const SizedBox(height: 24),
+                _buildUpgradeBanner(context),
+                const SizedBox(height: 16),
                 const Divider(color: Color(0xFF15151A)),
                 const SizedBox(height: 8),
 
@@ -126,6 +261,12 @@ class _AppShellState extends State<AppShell> {
                   'Trending',
                   Icons.local_fire_department_rounded,
                   4,
+                ),
+                _buildDrawerLink(
+                  'Membership',
+                  Icons.stars_rounded,
+                  -2,
+                  color: const Color(0xFFFFD700),
                 ),
                 _buildDrawerLink(
                   'Submit Tool',
@@ -379,6 +520,18 @@ class _AppShellState extends State<AppShell> {
     return ListTile(
       onTap: () {
         if (index != -1) {
+          if (index == -2) {
+            Navigator.pop(context); // close drawer
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SubscriptionScreen(
+                  onDismiss: () => Navigator.pop(context),
+                ),
+                fullscreenDialog: true,
+              ),
+            );
+            return;
+          }
           _navigate(index);
           Navigator.pop(context);
         } else if (isComingSoon) {
@@ -449,6 +602,79 @@ class _AppShellState extends State<AppShell> {
           color: Colors.black,
           fontSize: 10,
           fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUpgradeBanner(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SubscriptionScreen(
+                onDismiss: () => Navigator.pop(context),
+              ),
+              fullscreenDialog: true,
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4A89FF).withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Upgrade to Pro',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Unlock all AI features',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 12),
+            ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -20,7 +21,8 @@ class AuthProvider with ChangeNotifier {
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
-      await _auth.signInWithPopup(googleProvider);
+      final result = await _auth.signInWithPopup(googleProvider);
+      if (result.user != null) await _syncUserToFirestore(result.user!);
       notifyListeners();
       return null; // success
     } catch (e) {
@@ -30,7 +32,8 @@ class AuthProvider with ChangeNotifier {
 
   Future<String?> signInWithEmail(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final result = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      if (result.user != null) await _syncUserToFirestore(result.user!);
       notifyListeners();
       return null; // success
     } on FirebaseAuthException catch (e) {
@@ -46,10 +49,42 @@ class AuthProvider with ChangeNotifier {
         password: password,
       );
       await credential.user?.updateDisplayName(name);
+      if (credential.user != null) await _syncUserToFirestore(credential.user!);
       notifyListeners();
       return null; // success
     } on FirebaseAuthException catch (e) {
       return _authErrorMessage(e.code);
+    }
+  }
+
+  // ── Sync / Create User Document in Firestore ─────────────────────────────
+  Future<void> _syncUserToFirestore(User user) async {
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      // Always update these fields on every login
+      await userRef.set({
+        'uid': user.uid,
+        'email': user.email,
+        'last_login': FieldValue.serverTimestamp(),
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Only initialize these fields for NEW users (never overwrite Pro status)
+      final doc = await userRef.get();
+      final data = doc.data();
+      if (data?['is_pro'] == null) {
+        await userRef.update({
+          'is_pro': false,         // ← n8n Workflow 2 flips this to true after payment
+          'status': 'free',        // ← n8n Workflow 2 updates this to 'paid'
+          'payment_id': null,      // ← n8n Workflow 2 fills in the Razorpay receipt ID
+          'amount': 0.0,           // ← n8n Workflow 2 fills in the actual amount paid
+        });
+      }
+
+      print('✅ User synced to Firestore: ${user.uid}');
+    } catch (e) {
+      print('⚠️ Failed to sync user to Firestore: $e');
     }
   }
 
