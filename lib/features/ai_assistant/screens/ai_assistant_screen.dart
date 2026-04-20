@@ -8,6 +8,11 @@ import 'package:toolshub/features/home/widgets/animated_background.dart';
 import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
+import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
+import 'dart:ui';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -37,6 +42,32 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final auth = context.read<app_auth.AuthProvider>();
+
+      // ── Check Usage Limit for Free Users ────────────────────────────
+      if (!auth.isPro) {
+        final user = auth.currentUser;
+        if (user == null) {
+          _showError('Please sign in to use the AI Assistant.');
+          return;
+        }
+
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        final lastUsage = doc.data()?['last_ai_usage'] as Timestamp?;
+
+        if (lastUsage != null) {
+          final lastDate = lastUsage.toDate();
+          final now = DateTime.now();
+          if (lastDate.year == now.year && lastDate.month == now.month) {
+            _showLimitReachedError();
+            return;
+          }
+        }
+      }
+
       // ── Map UI to API Request ─────────────────────────────────────
       final request = AssistantRequest(
         category: _state.selections['Category']?.toString() ?? 'Other',
@@ -53,6 +84,14 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       );
 
       final response = await _apiService.getRecommendations(request);
+
+      // ── Update usage timestamp for free users ──────────────────────
+      if (!auth.isPro && auth.currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(auth.currentUser!.uid)
+            .update({'last_ai_usage': FieldValue.serverTimestamp()});
+      }
 
       if (mounted) {
         _showResults(response);
@@ -79,6 +118,45 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     );
   }
 
+  void _showLimitReachedError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.lock_clock_rounded, color: Color(0xFFFFD700), size: 18),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Free plan limit: 1 use per month reached. Upgrade for unlimited AI!',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'UPGRADE',
+          textColor: const Color(0xFFFFD700),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SubscriptionScreen(
+                  onDismiss: () => Navigator.pop(context),
+                ),
+                fullscreenDialog: true,
+              ),
+            );
+          },
+        ),
+        backgroundColor: const Color(0xFF14141C),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFFFFD700), width: 0.5),
+        ),
+      ),
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -97,113 +175,127 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<app_auth.AuthProvider>();
+    final bool isPro = auth.isPro;
+
     return Scaffold(
       backgroundColor: const Color(0xFF030303),
       body: Stack(
         children: [
+          // ── Main Content ──────────────────────────────────────────────
           AnimatedGridBackground(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 60,
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 640),
-                  child: Column(
-                    children: [
-                      // ── Header ──────────────────────────────────────────
-                      ScrollReveal(
-                        child: Column(
-                          children: [
-                            Text(
-                              'AI Stack Assistant',
-                              style: GoogleFonts.inter(
-                                fontSize: 36,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: -1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Describe what you need. We’ll build the right stack.',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                color: Colors.white54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 48),
-
-                      // ── Interaction Card ──────────────────────────────
-                      ScrollReveal(
-                        delay: 0.1,
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0C0C10),
-                            borderRadius: BorderRadius.circular(32),
-                            border: Border.all(
-                              color: const Color(0xFF1C1C22),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.5),
-                                blurRadius: 40,
-                                offset: const Offset(0, 20),
-                              ),
-                            ],
-                          ),
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(
+                sigmaX: (!auth.isLoggedIn) ? 8 : 0,
+                sigmaY: (!auth.isLoggedIn) ? 8 : 0,
+              ),
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 60,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 640),
+                    child: Column(
+                      children: [
+                        // ── Header ──────────────────────────────────────────
+                        ScrollReveal(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildPromptInput(),
-                              const SizedBox(height: 32),
-                              const Divider(
-                                color: Color(0xFF1C1C22),
-                                height: 1,
+                              Text(
+                                'AI Stack Assistant',
+                                style: GoogleFonts.inter(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -1.5,
+                                ),
                               ),
-                              const SizedBox(height: 24),
-
-                              _buildFilterHeader('CORE REQUIREMENTS'),
                               const SizedBox(height: 12),
-                              _buildFilterScroll(
-                                _state.filters.take(4).toList(),
-                              ),
-                              const SizedBox(height: 24),
-
-                              _buildFilterHeader('SPECIFICATIONS'),
-                              const SizedBox(height: 12),
-                              _buildFilterScroll(
-                                _state.filters.skip(4).toList(),
+                              Text(
+                                'Describe what you need. We’ll build the right stack.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  color: Colors.white54,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 48),
 
-                      const SizedBox(height: 40),
+                        // ── Interaction Card ──────────────────────────────
+                        ScrollReveal(
+                          delay: 0.1,
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0C0C10),
+                              borderRadius: BorderRadius.circular(32),
+                              border: Border.all(
+                                color: const Color(0xFF1C1C22),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  blurRadius: 40,
+                                  offset: const Offset(0, 20),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildPromptInput(),
+                                const SizedBox(height: 32),
+                                const Divider(
+                                  color: Color(0xFF1C1C22),
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 24),
 
-                      // ── Submit Button ─────────────────────────────────
-                      ScrollReveal(
-                        delay: 0.2,
-                        child: _PremiumCTA(
-                          onPressed: _isLoading ? null : _generateStack,
-                          isLoading: _isLoading,
+                                _buildFilterHeader('CORE REQUIREMENTS'),
+                                const SizedBox(height: 12),
+                                _buildFilterScroll(
+                                  _state.filters.take(4).toList(),
+                                ),
+                                const SizedBox(height: 24),
+
+                                _buildFilterHeader('SPECIFICATIONS'),
+                                const SizedBox(height: 12),
+                                _buildFilterScroll(
+                                  _state.filters.skip(4).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 40),
+
+                        // ── Submit Button ─────────────────────────────────
+                        ScrollReveal(
+                          delay: 0.2,
+                          child: _PremiumCTA(
+                            onPressed: _isLoading ? null : _generateStack,
+                            isLoading: _isLoading,
+                            isLocked: !auth.isLoggedIn,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+
+          // ── Locked Overlay ──────────────────────────────────────────
+          if (!auth.isLoggedIn) _buildLockedOverlay(context),
 
           if (_isLoading)
             Container(
@@ -284,6 +376,90 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               ),
             )
             .toList(),
+      ),
+    );
+  }
+
+  Widget _buildLockedOverlay(BuildContext context) {
+    return Positioned.fill(
+      child: Center(
+        child: ScrollReveal(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: const Color(0xFF030303).withOpacity(0.85),
+              borderRadius: BorderRadius.circular(40),
+              border:
+                  Border.all(color: const Color(0xFF4A89FF).withOpacity(0.2)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4A89FF).withOpacity(0.1),
+                  blurRadius: 100,
+                  spreadRadius: -20,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'SIGN IN TO ACCESS',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF4A89FF),
+                    letterSpacing: 2.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Unlock the AI Assistant',
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Describe your goals and we’ll build the perfect tool stack for you. Sign in to get 1 free use per month!',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.white54,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                _PremiumCTA(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SubscriptionScreen(
+                          onDismiss: () => Navigator.pop(context),
+                        ),
+                        fullscreenDialog: true,
+                      ),
+                    );
+                  },
+                  isLoading: false,
+                  isLocked: false,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Pro members get unlimited generations',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: Colors.white24,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1133,7 +1309,12 @@ class _FilterSheetState extends State<_FilterSheet> {
 class _PremiumCTA extends StatefulWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
-  const _PremiumCTA({required this.onPressed, required this.isLoading});
+  final bool isLocked;
+  const _PremiumCTA({
+    required this.onPressed,
+    required this.isLoading,
+    this.isLocked = false,
+  });
 
   @override
   State<_PremiumCTA> createState() => _PremiumCTAState();
@@ -1185,14 +1366,24 @@ class _PremiumCTAState extends State<_PremiumCTA> {
                       strokeWidth: 2,
                     ),
                   )
-                : Text(
-                    'Generate Custom Stack',
-                    style: GoogleFonts.inter(
-                      color: enabled ? Colors.white : Colors.white24,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.isLocked) ...[
+                        const Icon(Icons.lock_person_rounded,
+                            size: 18, color: Colors.white),
+                        const SizedBox(width: 12),
+                      ],
+                      Text(
+                        'Generate Custom Stack',
+                        style: GoogleFonts.inter(
+                          color: enabled ? Colors.white : Colors.white24,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
                   ),
           ),
         ),

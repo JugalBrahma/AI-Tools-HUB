@@ -57,12 +57,18 @@ class BookmarkProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleBookmark(String toolId) async {
+  Future<void> toggleBookmark(String toolId, {bool isPro = false}) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final docRef = _firestore.collection('bookmarks').doc(user.uid);
     final wasBookmarked = _bookmarkedIds.contains(toolId);
+
+    // Enforce 5-bookmark limit for non-pro users
+    if (!isPro && !wasBookmarked && _bookmarkedIds.length >= 5) {
+      throw Exception('FREE_LIMIT_REACHED');
+    }
+
+    final docRef = _firestore.collection('bookmarks').doc(user.uid);
 
     // Optimistic UI update
     if (wasBookmarked) {

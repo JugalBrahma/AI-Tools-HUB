@@ -7,6 +7,7 @@ import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/history_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'logo_widget.dart';
+import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
 
 class ToolCard extends StatefulWidget {
   const ToolCard({super.key, required this.tool, required this.themeColor});
@@ -159,9 +160,66 @@ class _ToolCardState extends State<ToolCard> {
       if (shouldRemove != true) return;
     }
 
-    await bookmarkProvider.toggleBookmark(widget.tool.docId);
-    _showCompactMessage(
-      wasBookmarked ? 'Removed from saved tools' : 'Saved to bookmarks',
+    try {
+      await bookmarkProvider.toggleBookmark(widget.tool.docId,
+          isPro: authProvider.isPro);
+      _showCompactMessage(
+        wasBookmarked ? 'Removed from saved tools' : 'Saved to bookmarks',
+      );
+    } catch (e) {
+      if (e.toString().contains('FREE_LIMIT_REACHED')) {
+        _showLimitReachedMessage();
+      } else {
+        _showCompactMessage('Could not update bookmark');
+      }
+    }
+  }
+
+  void _showLimitReachedMessage() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final sideInset = screenWidth > 680 ? (screenWidth - 460) / 2 : 16.0;
+    final accent = const Color(0xFFFFD700);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.stars_rounded, color: Color(0xFFFFD700), size: 18),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Free plan limit: 5 bookmarks. Upgrade to save unlimited tools!',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'UPGRADE',
+          textColor: const Color(0xFFFFD700),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SubscriptionScreen(
+                  onDismiss: () => Navigator.pop(context),
+                ),
+                fullscreenDialog: true,
+              ),
+            );
+          },
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin:
+            EdgeInsets.only(left: sideInset, right: sideInset, bottom: 18),
+        backgroundColor: const Color(0xFF14141C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: accent.withOpacity(0.3)),
+        ),
+      ),
     );
   }
 

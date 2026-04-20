@@ -231,8 +231,10 @@ class _AppShellState extends State<AppShell> {
                       : _buildLoginPrompt(context),
                 ),
 
-                const SizedBox(height: 24),
-                _buildUpgradeBanner(context),
+                if (!auth.isPro) ...[
+                  const SizedBox(height: 24),
+                  _buildUpgradeBanner(context),
+                ],
                 const SizedBox(height: 16),
                 const Divider(color: Color(0xFF15151A)),
                 const SizedBox(height: 8),
@@ -267,6 +269,7 @@ class _AppShellState extends State<AppShell> {
                   Icons.stars_rounded,
                   -2,
                   color: const Color(0xFFFFD700),
+                  badge: auth.isPro ? _buildProBadge() : null,
                 ),
                 _buildDrawerLink(
                   'Submit Tool',
@@ -314,41 +317,68 @@ class _AppShellState extends State<AppShell> {
 
     return Row(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00D4AA), Color(0xFF4A89FF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Center(
-            child: Text(
-              initials,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
+        Stack(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00D4AA), Color(0xFF4A89FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(
+                  initials,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
-          ),
+            if (auth.isPro)
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFD700),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.star, size: 10, color: Colors.black),
+                ),
+              ),
+          ],
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                name,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      name,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (auth.isPro) ...[
+                    const SizedBox(width: 6),
+                    _buildProBadge(),
+                  ],
+                ],
               ),
               const SizedBox(height: 2),
               Text(
@@ -363,6 +393,25 @@ class _AppShellState extends State<AppShell> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD700),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        'PRO',
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: Colors.black,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart';
 import 'package:toolshub/features/subscription/services/payment_integration_service.dart';
+import 'package:toolshub/features/auth/screens/login_screen.dart';
 import 'dart:html' if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart' as html;
 
 class SubscriptionScreen extends StatefulWidget {
@@ -335,12 +336,147 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final user = auth.currentUser;
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in to subscribe.'),
-          backgroundColor: Colors.orangeAccent,
-        ),
-      );
+      if (mounted) {
+        await showGeneralDialog(
+          context: context,
+          barrierColor: Colors.black54,
+          barrierDismissible: true,
+          barrierLabel: 'Dismiss',
+          transitionDuration: const Duration(milliseconds: 350),
+          transitionBuilder: (_, anim, __, child) {
+            final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.3),
+                end: Offset.zero,
+              ).animate(curve),
+              child: FadeTransition(opacity: curve, child: child),
+            );
+          },
+          pageBuilder: (dialogContext, _, __) => Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 40, left: 20, right: 20),
+              child: Material(
+                color: Colors.transparent,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0C0C14),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFF4A89FF).withOpacity(0.25),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4A89FF).withOpacity(0.08),
+                          blurRadius: 40,
+                          spreadRadius: -5,
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 20,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // ── Icon ────────────────────────────────────
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF4A89FF).withOpacity(0.15),
+                                const Color(0xFF00D4AA).withOpacity(0.08),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF4A89FF).withOpacity(0.2),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.person_add_rounded,
+                            color: Color(0xFF4A89FF),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        // ── Text ────────────────────────────────────
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sign in to subscribe',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Create an account to unlock this plan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: Colors.white38,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // ── CTA Button ──────────────────────────────
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                            Navigator.of(context).push(
+                              PageRouteBuilder(
+                                pageBuilder: (_, __, ___) => LoginScreen(
+                                  onDismiss: () => Navigator.of(context).pop(),
+                                ),
+                                transitionsBuilder: (_, anim, __, child) =>
+                                    FadeTransition(opacity: anim, child: child),
+                                transitionDuration:
+                                    const Duration(milliseconds: 300),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4A89FF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Sign In',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
       return;
     }
 
@@ -447,6 +583,49 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: Colors.white38,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Sign-In Benefit Row ────────────────────────────────────────────────────────
+
+class _SignInBenefit extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  const _SignInBenefit({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withOpacity(0.2)),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.white60,
+              height: 1.4,
+            ),
           ),
         ),
       ],

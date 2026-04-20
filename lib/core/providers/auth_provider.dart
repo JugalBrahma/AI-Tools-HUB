@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,9 +10,29 @@ class AuthProvider with ChangeNotifier {
   bool get isLoggedIn => _auth.currentUser != null;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  bool _isPro = false;
+  bool get isPro => _isPro;
+  StreamSubscription<DocumentSnapshot>? _userDocSubscription;
+
   AuthProvider() {
-    _auth.authStateChanges().listen((_) {
-      notifyListeners();
+    _auth.authStateChanges().listen((user) {
+      _userDocSubscription?.cancel();
+      if (user != null) {
+        _userDocSubscription = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots()
+            .listen((snapshot) {
+          if (snapshot.exists) {
+            final data = snapshot.data() as Map<String, dynamic>?;
+            _isPro = data?['is_pro'] ?? false;
+            notifyListeners();
+          }
+        });
+      } else {
+        _isPro = false;
+        notifyListeners();
+      }
     });
   }
 
@@ -79,6 +100,7 @@ class AuthProvider with ChangeNotifier {
           'status': 'free',        // ← n8n Workflow 2 updates this to 'paid'
           'payment_id': null,      // ← n8n Workflow 2 fills in the Razorpay receipt ID
           'amount': 0.0,           // ← n8n Workflow 2 fills in the actual amount paid
+          'last_ai_usage': null,   // ← Track AI Assistant usage for free limits
         });
       }
 
