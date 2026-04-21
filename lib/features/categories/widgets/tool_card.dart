@@ -8,6 +8,7 @@ import 'package:toolshub/core/providers/history_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'logo_widget.dart';
 import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
+import 'package:toolshub/core/navigation/app_navigator.dart';
 
 class ToolCard extends StatefulWidget {
   const ToolCard({super.key, required this.tool, required this.themeColor});
@@ -200,16 +201,7 @@ class _ToolCardState extends State<ToolCard> {
         action: SnackBarAction(
           label: 'UPGRADE',
           textColor: const Color(0xFFFFD700),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => SubscriptionScreen(
-                  onDismiss: () => Navigator.pop(context),
-                ),
-                fullscreenDialog: true,
-              ),
-            );
-          },
+          onPressed: () => AppNavigator.toSubscription(context),
         ),
         behavior: SnackBarBehavior.floating,
         margin:

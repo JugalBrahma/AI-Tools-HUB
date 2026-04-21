@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart';
 import 'package:toolshub/features/subscription/services/payment_integration_service.dart';
 import 'package:toolshub/features/auth/screens/login_screen.dart';
+import 'package:toolshub/core/navigation/app_navigator.dart';
 import 'dart:html' if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart' as html;
 
 class SubscriptionScreen extends StatefulWidget {
@@ -438,17 +439,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         ElevatedButton(
                           onPressed: () {
                             Navigator.of(dialogContext).pop();
-                            Navigator.of(context).push(
-                              PageRouteBuilder(
-                                pageBuilder: (_, __, ___) => LoginScreen(
-                                  onDismiss: () => Navigator.of(context).pop(),
-                                ),
-                                transitionsBuilder: (_, anim, __, child) =>
-                                    FadeTransition(opacity: anim, child: child),
-                                transitionDuration:
-                                    const Duration(milliseconds: 300),
-                              ),
-                            );
+                            AppNavigator.toLogin(context);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4A89FF),

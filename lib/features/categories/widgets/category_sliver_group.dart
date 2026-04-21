@@ -5,6 +5,7 @@ import 'tool_sliver_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
+import 'package:toolshub/core/navigation/app_navigator.dart';
 
 class CategorySliverGroup extends StatelessWidget {
   const CategorySliverGroup({super.key, required this.category});
@@ -83,16 +84,7 @@ class CategorySliverGroup extends StatelessWidget {
               padding: const EdgeInsets.only(top: 24),
               child: Center(
                 child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => SubscriptionScreen(
-                          onDismiss: () => Navigator.pop(context),
-                        ),
-                        fullscreenDialog: true,
-                      ),
-                    );
-                  },
+                  onTap: () => AppNavigator.toSubscription(context),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(

@@ -12,7 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
-import 'dart:ui';
+import 'package:toolshub/core/navigation/app_navigator.dart';
+import 'package:toolshub/features/auth/screens/login_screen.dart';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -136,16 +137,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         action: SnackBarAction(
           label: 'UPGRADE',
           textColor: const Color(0xFFFFD700),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => SubscriptionScreen(
-                  onDismiss: () => Navigator.pop(context),
-                ),
-                fullscreenDialog: true,
-              ),
-            );
-          },
+          onPressed: () => AppNavigator.toSubscription(context),
         ),
         backgroundColor: const Color(0xFF14141C),
         behavior: SnackBarBehavior.floating,
@@ -167,6 +159,134 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     );
   }
 
+  void _showSignInToast() {
+    showGeneralDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      transitionDuration: const Duration(milliseconds: 350),
+      transitionBuilder: (_, anim, __, child) {
+        final curve =
+            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.3),
+            end: Offset.zero,
+          ).animate(curve),
+          child: FadeTransition(opacity: curve, child: child),
+        );
+      },
+      pageBuilder: (dialogContext, _, __) => Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 40, left: 20, right: 20),
+          child: Material(
+            color: Colors.transparent,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0C0C14),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF4A89FF).withOpacity(0.25),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4A89FF).withOpacity(0.08),
+                      blurRadius: 40,
+                      spreadRadius: -5,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 20,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF4A89FF).withOpacity(0.15),
+                            const Color(0xFF00D4AA).withOpacity(0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF4A89FF).withOpacity(0.2),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.person_add_rounded,
+                        color: Color(0xFF4A89FF),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sign in to generate',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Create an account to use the AI Assistant',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.white38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        AppNavigator.toLogin(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4A89FF),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Sign In',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onSelectionChanged(FilterConfig filter, dynamic value) {
     setState(() {
       _state.selections[filter.label] = value;
@@ -176,7 +296,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<app_auth.AuthProvider>();
-    final bool isPro = auth.isPro;
 
     return Scaffold(
       backgroundColor: const Color(0xFF030303),
@@ -184,118 +303,110 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         children: [
           // ── Main Content ──────────────────────────────────────────────
           AnimatedGridBackground(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                sigmaX: (!auth.isLoggedIn) ? 8 : 0,
-                sigmaY: (!auth.isLoggedIn) ? 8 : 0,
-              ),
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 60,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 640),
-                    child: Column(
-                      children: [
-                        // ── Header ──────────────────────────────────────────
-                        ScrollReveal(
-                          child: Column(
-                            children: [
-                              Text(
-                                'AI Stack Assistant',
-                                style: GoogleFonts.inter(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: -1.5,
-                                ),
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 60,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: Column(
+                    children: [
+                      // ── Header ──────────────────────────────────────────
+                      ScrollReveal(
+                        child: Column(
+                          children: [
+                            Text(
+                              'AI Stack Assistant',
+                              style: GoogleFonts.inter(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -1.5,
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Describe what you need. We\'ll build the right stack.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                color: Colors.white54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+
+                      // ── Interaction Card ──────────────────────────────
+                      ScrollReveal(
+                        delay: 0.1,
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0C0C10),
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(
+                              color: const Color(0xFF1C1C22),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 40,
+                                offset: const Offset(0, 20),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildPromptInput(),
+                              const SizedBox(height: 32),
+                              const Divider(
+                                color: Color(0xFF1C1C22),
+                                height: 1,
+                              ),
+                              const SizedBox(height: 24),
+
+                              _buildFilterHeader('CORE REQUIREMENTS'),
                               const SizedBox(height: 12),
-                              Text(
-                                'Describe what you need. We’ll build the right stack.',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  color: Colors.white54,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              _buildFilterScroll(
+                                _state.filters.take(4).toList(),
+                              ),
+                              const SizedBox(height: 24),
+
+                              _buildFilterHeader('SPECIFICATIONS'),
+                              const SizedBox(height: 12),
+                              _buildFilterScroll(
+                                _state.filters.skip(4).toList(),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 48),
+                      ),
 
-                        // ── Interaction Card ──────────────────────────────
-                        ScrollReveal(
-                          delay: 0.1,
-                          child: Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0C0C10),
-                              borderRadius: BorderRadius.circular(32),
-                              border: Border.all(
-                                color: const Color(0xFF1C1C22),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  blurRadius: 40,
-                                  offset: const Offset(0, 20),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildPromptInput(),
-                                const SizedBox(height: 32),
-                                const Divider(
-                                  color: Color(0xFF1C1C22),
-                                  height: 1,
-                                ),
-                                const SizedBox(height: 24),
+                      const SizedBox(height: 40),
 
-                                _buildFilterHeader('CORE REQUIREMENTS'),
-                                const SizedBox(height: 12),
-                                _buildFilterScroll(
-                                  _state.filters.take(4).toList(),
-                                ),
-                                const SizedBox(height: 24),
-
-                                _buildFilterHeader('SPECIFICATIONS'),
-                                const SizedBox(height: 12),
-                                _buildFilterScroll(
-                                  _state.filters.skip(4).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
+                      // ── Submit Button ─────────────────────────────────
+                      ScrollReveal(
+                        delay: 0.2,
+                        child: _PremiumCTA(
+                          onPressed: _isLoading ? null : _generateStack,
+                          isLoading: _isLoading,
+                          isLocked: !auth.isLoggedIn,
+                          onLockedTap: _showSignInToast,
                         ),
-
-                        const SizedBox(height: 40),
-
-                        // ── Submit Button ─────────────────────────────────
-                        ScrollReveal(
-                          delay: 0.2,
-                          child: _PremiumCTA(
-                            onPressed: _isLoading ? null : _generateStack,
-                            isLoading: _isLoading,
-                            isLocked: !auth.isLoggedIn,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-
-          // ── Locked Overlay ──────────────────────────────────────────
-          if (!auth.isLoggedIn) _buildLockedOverlay(context),
 
           if (_isLoading)
             Container(
@@ -1308,12 +1419,14 @@ class _FilterSheetState extends State<_FilterSheet> {
 
 class _PremiumCTA extends StatefulWidget {
   final VoidCallback? onPressed;
+  final VoidCallback? onLockedTap;
   final bool isLoading;
   final bool isLocked;
   const _PremiumCTA({
     required this.onPressed,
     required this.isLoading,
     this.isLocked = false,
+    this.onLockedTap,
   });
 
   @override
@@ -1325,13 +1438,14 @@ class _PremiumCTAState extends State<_PremiumCTA> {
 
   @override
   Widget build(BuildContext context) {
-    bool enabled = widget.onPressed != null;
+    final bool locked = widget.isLocked;
+    final bool enabled = !locked && widget.onPressed != null;
 
     return GestureDetector(
-      onTapDown: enabled ? (_) => setState(() => _isPressed = true) : null,
-      onTapUp: enabled ? (_) => setState(() => _isPressed = false) : null,
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
-      onTap: widget.onPressed,
+      onTap: locked ? widget.onLockedTap : widget.onPressed,
       child: AnimatedScale(
         scale: _isPressed ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 100),
@@ -1339,13 +1453,20 @@ class _PremiumCTAState extends State<_PremiumCTA> {
           width: double.infinity,
           height: 64,
           decoration: BoxDecoration(
-            gradient: enabled
-                ? const LinearGradient(
-                    colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
-                  )
-                : null,
-            color: enabled ? null : Colors.white12,
+            gradient: locked
+                ? null
+                : (enabled
+                    ? const LinearGradient(
+                        colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
+                      )
+                    : null),
+            color: locked
+                ? const Color(0xFF14141C)
+                : (enabled ? null : Colors.white12),
             borderRadius: BorderRadius.circular(20),
+            border: locked
+                ? Border.all(color: const Color(0xFF252533))
+                : null,
             boxShadow: enabled
                 ? [
                     BoxShadow(
@@ -1369,15 +1490,19 @@ class _PremiumCTAState extends State<_PremiumCTA> {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (widget.isLocked) ...[
-                        const Icon(Icons.lock_person_rounded,
-                            size: 18, color: Colors.white),
-                        const SizedBox(width: 12),
+                      if (locked) ...[
+                        const Icon(Icons.lock_rounded,
+                            size: 16, color: Color(0xFF4A89FF)),
+                        const SizedBox(width: 10),
                       ],
                       Text(
-                        'Generate Custom Stack',
+                        locked
+                            ? 'Sign in to Generate'
+                            : 'Generate Custom Stack',
                         style: GoogleFonts.inter(
-                          color: enabled ? Colors.white : Colors.white24,
+                          color: locked
+                              ? const Color(0xFF4A89FF)
+                              : (enabled ? Colors.white : Colors.white24),
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:html' if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart' as html;
+import 'dart:html'
+    if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart'
+    as html;
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +15,7 @@ import 'package:toolshub/features/trending/screens/trending_screen.dart';
 import 'package:toolshub/features/ai_assistant/screens/ai_assistant_screen.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
-import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
+import 'package:toolshub/core/navigation/app_navigator.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -67,8 +69,11 @@ class _AppShellState extends State<AppShell> {
                 color: const Color(0xFF00D4AA).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle_rounded,
-                  color: Color(0xFF00D4AA), size: 48),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF00D4AA),
+                size: 48,
+              ),
             ),
             const SizedBox(height: 20),
             Text(
@@ -197,7 +202,7 @@ class _AppShellState extends State<AppShell> {
       case 1:
         return const CategoriesPage();
       case 2:
-        return const ProfileScreen();
+        return ProfileScreen(onDismiss: () {});
       case 3:
         return const BookmarksScreen();
       case 4:
@@ -418,18 +423,7 @@ class _AppShellState extends State<AppShell> {
   // ── Not Logged In Header ────────────────────────────────────────────────────
   Widget _buildLoginPrompt(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pop(context); // close drawer
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) =>
-                LoginScreen(onDismiss: () => Navigator.of(context).pop()),
-            transitionsBuilder: (_, anim, __, child) =>
-                FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 250),
-          ),
-        );
-      },
+      onTap: () => AppNavigator.toLogin(context, closeDrawer: true),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -498,18 +492,7 @@ class _AppShellState extends State<AppShell> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: GestureDetector(
-        onTap: () {
-          Navigator.pop(context);
-          Navigator.of(context).push(
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) =>
-                  LoginScreen(onDismiss: () => Navigator.of(context).pop()),
-              transitionsBuilder: (_, anim, __, child) =>
-                  FadeTransition(opacity: anim, child: child),
-              transitionDuration: const Duration(milliseconds: 250),
-            ),
-          );
-        },
+        onTap: () => AppNavigator.toLogin(context, closeDrawer: true),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: BoxDecoration(
@@ -570,15 +553,7 @@ class _AppShellState extends State<AppShell> {
       onTap: () {
         if (index != -1) {
           if (index == -2) {
-            Navigator.pop(context); // close drawer
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => SubscriptionScreen(
-                  onDismiss: () => Navigator.pop(context),
-                ),
-                fullscreenDialog: true,
-              ),
-            );
+            AppNavigator.toSubscription(context, closeDrawer: true);
             return;
           }
           _navigate(index);
@@ -660,17 +635,7 @@ class _AppShellState extends State<AppShell> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
-        onTap: () {
-          Navigator.pop(context);
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => SubscriptionScreen(
-                onDismiss: () => Navigator.pop(context),
-              ),
-              fullscreenDialog: true,
-            ),
-          );
-        },
+        onTap: () => AppNavigator.toSubscription(context, closeDrawer: true),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -696,7 +661,11 @@ class _AppShellState extends State<AppShell> {
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -721,7 +690,11 @@ class _AppShellState extends State<AppShell> {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 12),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.white,
+                size: 12,
+              ),
             ],
           ),
         ),

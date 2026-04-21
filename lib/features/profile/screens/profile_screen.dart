@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
-import 'package:toolshub/features/auth/screens/login_screen.dart';
+import 'package:toolshub/core/navigation/app_navigator.dart';
 import 'package:toolshub/features/home/widgets/footer.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
@@ -10,7 +10,7 @@ import 'package:toolshub/core/providers/history_provider.dart';
 import 'package:toolshub/core/models/tool_model.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, required void Function() onDismiss});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -602,17 +602,7 @@ class _NotLoggedInView extends StatelessWidget {
 
   Widget _buildSignInCTA(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) =>
-                const LoginScreen(onDismiss: null), // Update this if needed
-            transitionsBuilder: (_, anim, __, child) =>
-                FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 250),
-          ),
-        );
-      },
+      onTap: () => AppNavigator.toLogin(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
         decoration: BoxDecoration(
