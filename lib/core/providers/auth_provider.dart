@@ -11,7 +11,9 @@ class AuthProvider with ChangeNotifier {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   bool _isPro = false;
+  String _status = 'free';
   bool get isPro => _isPro;
+  String get status => _status;
   StreamSubscription<DocumentSnapshot>? _userDocSubscription;
 
   AuthProvider() {
@@ -23,12 +25,13 @@ class AuthProvider with ChangeNotifier {
             .doc(user.uid)
             .snapshots()
             .listen((snapshot) {
-          if (snapshot.exists) {
-            final data = snapshot.data() as Map<String, dynamic>?;
-            _isPro = data?['is_pro'] ?? false;
-            notifyListeners();
-          }
-        });
+              if (snapshot.exists) {
+                final data = snapshot.data() as Map<String, dynamic>?;
+                _isPro = data?['is_pro'] ?? false;
+                _status = data?['status'] ?? 'free';
+                notifyListeners();
+              }
+            });
       } else {
         _isPro = false;
         notifyListeners();
@@ -53,7 +56,10 @@ class AuthProvider with ChangeNotifier {
 
   Future<String?> signInWithEmail(String email, String password) async {
     try {
-      final result = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       if (result.user != null) await _syncUserToFirestore(result.user!);
       notifyListeners();
       return null; // success
@@ -63,7 +69,11 @@ class AuthProvider with ChangeNotifier {
   }
 
   // ── Email & Password Sign Up ─────────────────────────────────────────────
-  Future<String?> signUpWithEmail(String email, String password, String name) async {
+  Future<String?> signUpWithEmail(
+    String email,
+    String password,
+    String name,
+  ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -82,31 +92,34 @@ class AuthProvider with ChangeNotifier {
   Future<void> _syncUserToFirestore(User user) async {
     try {
       final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-
-      // Always update these fields on every login
-      await userRef.set({
-        'uid': user.uid,
-        'email': user.email,
-        'last_login': FieldValue.serverTimestamp(),
-        'updated_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      // Only initialize these fields for NEW users (never overwrite Pro status)
       final doc = await userRef.get();
-      final data = doc.data();
-      if (data?['is_pro'] == null) {
-        await userRef.update({
-          'is_pro': false,         // ← n8n Workflow 2 flips this to true after payment
-          'status': 'free',        // ← n8n Workflow 2 updates this to 'paid'
-          'payment_id': null,      // ← n8n Workflow 2 fills in the Razorpay receipt ID
-          'amount': 0.0,           // ← n8n Workflow 2 fills in the actual amount paid
-          'last_ai_usage': null,   // ← Track AI Assistant usage for free limits
-        });
-      }
 
-      print('✅ User synced to Firestore: ${user.uid}');
+      if (!doc.exists) {
+        // ONLY Create fresh for new users. 
+        await userRef.set({
+          'uid': user.uid,
+          'email': user.email,
+          'is_pro': false,         
+          'status': 'free',        
+          'payment_id': null,
+          'amount': 0.0,
+          'last_ai_usage': null,
+          'created_at': FieldValue.serverTimestamp(),
+          'last_login': FieldValue.serverTimestamp(),
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+        debugPrint('🆕 New user initialized: ${user.uid}');
+      } else {
+        // Ensure existing users also have the 'user_id' field without overwriting pro status
+        await userRef.update({
+          'user_id': user.uid,
+          'last_login': FieldValue.serverTimestamp(),
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+        debugPrint('🔄 Existing user synced: ${user.uid}');
+      }
     } catch (e) {
-      print('⚠️ Failed to sync user to Firestore: $e');
+      debugPrint('⚠️ Failed to sync user to Firestore: $e');
     }
   }
 

@@ -4,9 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart';
 import 'package:toolshub/features/subscription/services/payment_integration_service.dart';
-import 'package:toolshub/features/auth/screens/login_screen.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
-import 'dart:html' if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart' as html;
+import 'package:toolshub/core/utils/html_stub.dart'
+    if (dart.library.html) 'dart:html'
+    as html;
 
 class SubscriptionScreen extends StatefulWidget {
   final VoidCallback onDismiss;
@@ -18,7 +19,6 @@ class SubscriptionScreen extends StatefulWidget {
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  bool isYearly = true;
   bool _isProcessing = false;
   String? _processingPlan;
 
@@ -35,8 +35,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               child: Column(
                 children: [
                   _buildHeader(),
-                  const SizedBox(height: 48),
-                  _buildBillingToggle(),
                   const SizedBox(height: 48),
                   _buildPricingCards(),
                   const SizedBox(height: 60),
@@ -117,75 +115,85 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     );
   }
 
-  Widget _buildBillingToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D0D12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1A1A24)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _toggleItem('Monthly', !isYearly),
-          _toggleItem('Yearly (Save 30%)', isYearly),
-        ],
-      ),
-    );
-  }
-
-  Widget _toggleItem(String label, bool active) {
-    return GestureDetector(
-      onTap: () => setState(() => isYearly = label.contains('Yearly')),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF1A1A24) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-            color: active ? Colors.white : Colors.white38,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPricingCards() {
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth > 800) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _pricingCard('Free', '0', ['Basic Search', '10 Bookmarks', 'Community Support'])),
-            const SizedBox(width: 24),
-            Expanded(child: _pricingCard('Pro', isYearly ? '12' : '19', ['AI Assistant V2', 'Unlimited Bookmarks', 'Daily Briefings', 'Priority Support'], isFeatured: true)),
-            const SizedBox(width: 24),
-            Expanded(child: _pricingCard('Expert', isYearly ? '32' : '49', ['API Access', 'Custom Workflow', 'Early Beta access', 'Dedicated Account Manager'])),
-          ],
-        );
-      } else {
-        return Column(
-          children: [
-            _pricingCard('Free', '0', ['Basic Search', '10 Bookmarks', 'Community Support']),
-            const SizedBox(height: 24),
-            _pricingCard('Pro', isYearly ? '12' : '19', ['AI Assistant V2', 'Unlimited Bookmarks', 'Daily Briefings', 'Priority Support'], isFeatured: true),
-            const SizedBox(height: 24),
-            _pricingCard('Expert', isYearly ? '32' : '49', ['API Access', 'Custom Workflow', 'Early Beta access', 'Dedicated Account Manager']),
-          ],
-        );
-      }
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 800) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _pricingCard('Free', '0', [
+                  'Basic Search',
+                  '10 Bookmarks',
+                  'Community Support',
+                ]),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _pricingCard(
+                  'Trial',
+                  '1',
+                  ['Full AI Access', 'Try Pro Features', '4 Days Duration'],
+                  suffix: '/4 days',
+                  subLabel: 'One-time payment',
+                  isFeatured: true,
+                  badgeText: 'TRIAL OFFER',
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _pricingCard('Pro', '7', [
+                  'AI Assistant V2',
+                  'Unlimited Bookmarks',
+                  'Daily Briefings',
+                  'Priority Support',
+                ]),
+              ),
+            ],
+          );
+        } else {
+          return Column(
+            children: [
+              _pricingCard('Free', '0', [
+                'Basic Search',
+                '10 Bookmarks',
+                'Community Support',
+              ]),
+              const SizedBox(height: 24),
+              _pricingCard(
+                'Trial',
+                '1',
+                ['Full AI Access', 'Try Pro Features', '4 Days Duration'],
+                suffix: '/4 days',
+                subLabel: 'One-time payment',
+                isFeatured: true,
+                badgeText: 'TRIAL OFFER',
+              ),
+              const SizedBox(height: 24),
+              _pricingCard('Pro', '7', [
+                'AI Assistant V2',
+                'Unlimited Bookmarks',
+                'Daily Briefings',
+                'Priority Support',
+              ]),
+            ],
+          );
+        }
+      },
+    );
   }
 
-  Widget _pricingCard(String title, String price, List<String> features, {bool isFeatured = false}) {
+  Widget _pricingCard(
+    String title,
+    String price,
+    List<String> features, {
+    bool isFeatured = false,
+    String suffix = '/mo',
+    String subLabel = 'Billed monthly',
+    String badgeText = 'MOST POPULAR',
+  }) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -201,7 +209,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   color: const Color(0xFF4A89FF).withOpacity(0.1),
                   blurRadius: 40,
                   spreadRadius: -10,
-                )
+                ),
               ]
             : null,
       ),
@@ -221,13 +229,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               ),
               if (isFeatured)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4A89FF),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'MOST POPULAR',
+                    badgeText,
                     style: GoogleFonts.ibmPlexMono(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
@@ -252,7 +263,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               ),
               const SizedBox(width: 4),
               Text(
-                '/mo',
+                suffix,
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -263,40 +274,47 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            isYearly ? 'Billed annually' : 'Billed monthly',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: Colors.white24,
-            ),
+            subLabel,
+            style: GoogleFonts.inter(fontSize: 13, color: Colors.white24),
           ),
           const SizedBox(height: 32),
           const Divider(color: Color(0xFF1A1A24)),
           const SizedBox(height: 32),
-          ...features.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_rounded, color: Color(0xFF00D4AA), size: 18),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        f,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
+          ...features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF00D4AA),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      f,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white70,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _isProcessing ? null : () => _handleSubscriptionTrigger(title, price),
+              onPressed: _isProcessing
+                  ? null
+                  : () => _handleSubscriptionTrigger(title, price),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isFeatured ? const Color(0xFF4A89FF) : Colors.white,
+                backgroundColor: isFeatured
+                    ? const Color(0xFF4A89FF)
+                    : Colors.white,
                 foregroundColor: isFeatured ? Colors.white : Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -345,7 +363,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           barrierLabel: 'Dismiss',
           transitionDuration: const Duration(milliseconds: 350),
           transitionBuilder: (_, anim, __, child) {
-            final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+            final curve = CurvedAnimation(
+              parent: anim,
+              curve: Curves.easeOutCubic,
+            );
             return SlideTransition(
               position: Tween<Offset>(
                 begin: const Offset(0, 0.3),
@@ -445,7 +466,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             backgroundColor: const Color(0xFF4A89FF),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -484,16 +507,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         uid: user.uid,
         userEmail: user.email ?? '',
         amountPaise: amountPaise,
+        plan: plan,
       );
 
       // Support both n8n-formatted and raw Razorpay responses
-      final paymentUrl = responseData?['short_url'] ?? responseData?['payment_url'];
+      final paymentUrl =
+          responseData?['short_url'] ?? responseData?['payment_url'];
       final status = responseData?['status']?.toString().toLowerCase();
       final isSuccess = status == 'success' || status == 'created';
 
       if (paymentUrl != null && isSuccess) {
         if (kDebugMode) {
-          print('✅ Payment link ready. Redirecting in same tab to: $paymentUrl');
+          print(
+            '✅ Payment link ready. Redirecting in same tab to: $paymentUrl',
+          );
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -510,7 +537,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Could not connect to payment server. Please try again.'),
+              content: Text(
+                'Could not connect to payment server. Please try again.',
+              ),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -553,9 +582,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           runSpacing: 20,
           alignment: WrapAlignment.center,
           children: [
-             _badge(Icons.security, '256-bit SSL'),
-             _badge(Icons.verified_user, 'PCI Compliant'),
-             _badge(Icons.autorenew, 'Cancel Anytime'),
+            _badge(Icons.security, '256-bit SSL'),
+            _badge(Icons.verified_user, 'PCI Compliant'),
+            _badge(Icons.autorenew, 'Cancel Anytime'),
           ],
         ),
       ],

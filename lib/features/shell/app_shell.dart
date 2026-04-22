@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:html'
-    if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart'
+import 'package:toolshub/core/utils/html_stub.dart'
+    if (dart.library.html) 'dart:html'
     as html;
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -274,7 +274,9 @@ class _AppShellState extends State<AppShell> {
                   Icons.stars_rounded,
                   -2,
                   color: const Color(0xFFFFD700),
-                  badge: auth.isPro ? _buildProBadge() : null,
+                  badge: (auth.isPro || auth.status == 'trial')
+                      ? _buildStatusBadge(auth)
+                      : null,
                 ),
                 _buildDrawerLink(
                   'Submit Tool',
@@ -379,9 +381,9 @@ class _AppShellState extends State<AppShell> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (auth.isPro) ...[
+                  if (auth.isPro || auth.status == 'trial') ...[
                     const SizedBox(width: 6),
-                    _buildProBadge(),
+                    _buildStatusBadge(auth),
                   ],
                 ],
               ),
@@ -401,15 +403,16 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _buildProBadge() {
+  Widget _buildStatusBadge(app_auth.AuthProvider auth) {
+    final isTrial = auth.status == 'trial';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFD700),
+        color: isTrial ? const Color(0xFF00D4AA) : const Color(0xFFFFD700),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        'PRO',
+        isTrial ? 'TRIAL' : 'PRO',
         style: GoogleFonts.ibmPlexMono(
           fontSize: 8,
           fontWeight: FontWeight.w900,

@@ -86,13 +86,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
       final response = await _apiService.getRecommendations(request);
 
-      // ── Update usage timestamp for free users ──────────────────────
+      // ── Update usage timestamp for free users ──
+      // NOTE: Update logic disabled per directive to only create new user docs, not update existing ones.
+      /*
       if (!auth.isPro && auth.currentUser != null) {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(auth.currentUser!.uid)
             .update({'last_ai_usage': FieldValue.serverTimestamp()});
       }
+      */
 
       if (mounted) {
         _showResults(response);

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
-import 'dart:html' if (dart.library.io) 'package:toolshub/core/utils/html_stub.dart' as html;
+import 'package:toolshub/core/utils/html_stub.dart' if (dart.library.html) 'dart:html' as html;
 
 class PaymentIntegrationService {
   static const String _n8nWebhookUrl = 'https://n8n.srv1563394.hstgr.cloud/webhook-test/create-payment';
@@ -12,12 +12,14 @@ class PaymentIntegrationService {
     required String uid,
     required String userEmail,
     required int amountPaise,
+    required String plan,
   }) async {
     final callbackUrl = html.window.location.origin;
 
     print('🚀 CALLING N8N: $_n8nWebhookUrl');
     print('📦 PAYLOAD: ${{
       'uid': uid,
+      'plan': plan,
       'amount_paise': amountPaise,
       'user_email': userEmail,
       'callback_url': callbackUrl,
@@ -28,9 +30,11 @@ class PaymentIntegrationService {
         Uri.parse(_n8nWebhookUrl),
         headers: {
           'Content-Type': 'application/json',
+          'X-API-Key': '__n8n_BLANK_VALUE_e5362baf-c777-4d57-a609-6eaf1f9e87f6',
         },
         body: jsonEncode({
           'uid': uid,
+          'plan': plan,
           'amount_paise': amountPaise,
           'user_email': userEmail,
           'callback_url': callbackUrl,
