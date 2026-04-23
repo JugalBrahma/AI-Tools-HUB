@@ -81,6 +81,14 @@ class AssistantResponse {
       confidenceLevel: data['confidence_level'] ?? 'Medium',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'success': success,
+    'top_pick': topPick?.toJson(),
+    'alternatives': alternatives.map((e) => e.toJson()).toList(),
+    'missing_information': missingInformation,
+    'confidence_level': confidenceLevel,
+  };
 }
 
 class Recommendation {
@@ -122,4 +130,17 @@ class Recommendation {
       caution: json['caution'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'toolName': toolName,
+    'url': url,
+    'price': price,
+    'fit_score_reason': fitScoreReason,
+    'why_it_fits': whyItFits,
+    'tradeoffs': tradeoffs,
+    'best_for': bestFor,
+    'freshness_status': freshnessStatus,
+    'evidence_summary': evidenceSummary,
+    'caution': caution,
+  };
 }

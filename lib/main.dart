@@ -37,16 +37,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tool Hub',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.dark(
-          surface: const Color(0xFF050506),
-          // ignore: deprecated_member_use
-          background: const Color(0xFF050506),
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          colorScheme: ColorScheme.dark(
+            surface: const Color(0xFF050506),
+            // ignore: deprecated_member_use
+            background: const Color(0xFF050506),
+          ),
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          scaffoldBackgroundColor: const Color(0xFF050506),
         ),
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFF050506),
-      ),
       home: const AppShell(),
     );
   }

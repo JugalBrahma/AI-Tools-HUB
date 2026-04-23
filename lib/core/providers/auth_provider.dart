@@ -12,13 +12,20 @@ class AuthProvider with ChangeNotifier {
 
   bool _isPro = false;
   String _status = 'free';
+  DateTime? _expiryDate;
+  String? _plan;
+
   bool get isPro => _isPro;
   String get status => _status;
+  DateTime? get expiryDate => _expiryDate;
+  String? get plan => _plan;
   StreamSubscription<DocumentSnapshot>? _userDocSubscription;
+  Timer? _expiryTimer;
 
   AuthProvider() {
     _auth.authStateChanges().listen((user) {
       _userDocSubscription?.cancel();
+      _expiryTimer?.cancel();
       if (user != null) {
         _userDocSubscription = FirebaseFirestore.instance
             .collection('users')
@@ -29,14 +36,85 @@ class AuthProvider with ChangeNotifier {
                 final data = snapshot.data() as Map<String, dynamic>?;
                 _isPro = data?['is_pro'] ?? false;
                 _status = data?['status'] ?? 'free';
+
+                _plan = data?['plan'];
+
+                if (data?['expiry_date'] != null) {
+                  final dynamic expiryVal = data!['expiry_date'];
+                  try {
+                    if (expiryVal is Timestamp) {
+                      _expiryDate = expiryVal.toDate();
+                    } else if (expiryVal is String) {
+                      _expiryDate = DateTime.tryParse(expiryVal);
+                    } else if (expiryVal is int) {
+                      _expiryDate = DateTime.fromMillisecondsSinceEpoch(expiryVal);
+                    } else if (expiryVal is Map) {
+                      // Sometimes REST APIs / n8n save Timestamps as maps
+                      final seconds = expiryVal['_seconds'] ?? expiryVal['seconds'];
+                      if (seconds != null) {
+                        _expiryDate = DateTime.fromMillisecondsSinceEpoch((seconds as int) * 1000);
+                      }
+                    } else {
+                      // Fallback dynamic dispatch
+                      _expiryDate = expiryVal.toDate();
+                    }
+                  } catch (e) {
+                    print('⚠️ Error parsing expiry_date: $e');
+                    _expiryDate = null;
+                  }
+                } else {
+                  _expiryDate = null;
+                }
+
+                // Expiry Check
+                if (_isPro && _expiryDate != null) {
+                  if (DateTime.now().isAfter(_expiryDate!)) {
+                    _isPro = false;
+                    _status = 'expired';
+                    // Update Firestore to reflect expiration
+                    FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+                      'is_pro': false,
+                      'status': 'expired',
+                    });
+                  } else {
+                    _startExpiryTimer(user.uid);
+                  }
+                }
+
                 notifyListeners();
               }
             });
       } else {
         _isPro = false;
+        _expiryDate = null;
+        _plan = null;
+        _expiryTimer?.cancel();
         notifyListeners();
       }
     });
+  }
+
+  void _startExpiryTimer(String uid) {
+    _expiryTimer?.cancel();
+    _expiryTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (_expiryDate != null && DateTime.now().isAfter(_expiryDate!)) {
+        _isPro = false;
+        _status = 'expired';
+        FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'is_pro': false,
+          'status': 'expired',
+        });
+        notifyListeners();
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _expiryTimer?.cancel();
+    _userDocSubscription?.cancel();
+    super.dispose();
   }
 
   // ── Google Sign In (Web-compatible) ─────────────────────────────────────
@@ -110,9 +188,9 @@ class AuthProvider with ChangeNotifier {
         });
         debugPrint('🆕 New user initialized: ${user.uid}');
       } else {
-        // Ensure existing users also have the 'user_id' field without overwriting pro status
+        // Ensure last_login is refreshed on every login (never touches is_pro / status)
         await userRef.update({
-          'user_id': user.uid,
+          'uid': user.uid,
           'last_login': FieldValue.serverTimestamp(),
           'updated_at': FieldValue.serverTimestamp(),
         });

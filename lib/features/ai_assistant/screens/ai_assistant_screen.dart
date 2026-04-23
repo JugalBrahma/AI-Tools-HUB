@@ -7,13 +7,11 @@ import 'package:toolshub/features/ai_assistant/services/assistant_api_service.da
 import 'package:toolshub/features/home/widgets/animated_background.dart';
 import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
-import 'package:toolshub/features/auth/screens/login_screen.dart';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -85,6 +83,24 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       );
 
       final response = await _apiService.getRecommendations(request);
+
+      // Save to history
+      if (auth.currentUser != null) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('ai_history')
+              .doc(auth.currentUser!.uid)
+              .collection('history')
+              .add({
+                'prompt': goal,
+                'timestamp': FieldValue.serverTimestamp(),
+                'top_pick': response.topPick?.toolName ?? 'Unknown',
+                'response_json': response.toJson(),
+              });
+        } catch (e) {
+          debugPrint('Failed to save AI history: $e');
+        }
+      }
 
       // ── Update usage timestamp for free users ──
       // NOTE: Update logic disabled per directive to only create new user docs, not update existing ones.
@@ -170,8 +186,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       barrierLabel: 'Dismiss',
       transitionDuration: const Duration(milliseconds: 350),
       transitionBuilder: (_, anim, __, child) {
-        final curve =
-            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(0, 0.3),
@@ -266,7 +281,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         backgroundColor: const Color(0xFF4A89FF),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -302,6 +319,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF030303),
+      drawer: _buildHistoryDrawer(),
       body: Stack(
         children: [
           // ── Main Content ──────────────────────────────────────────────
@@ -411,6 +429,36 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ),
 
+          // ── Left Side Drawer Toggle ───────────────────────────────────
+          Positioned(
+            left: 24,
+            top: 24,
+            child: Builder(
+              builder: (context) => Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF141418),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF24242A)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.menu_open_rounded,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  tooltip: 'Conversation History',
+                ),
+              ),
+            ),
+          ),
+
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.4),
@@ -504,8 +552,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFF030303).withOpacity(0.85),
               borderRadius: BorderRadius.circular(40),
-              border:
-                  Border.all(color: const Color(0xFF4A89FF).withOpacity(0.2)),
+              border: Border.all(
+                color: const Color(0xFF4A89FF).withOpacity(0.2),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF4A89FF).withOpacity(0.1),
@@ -574,6 +623,143 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryDrawer() {
+    final auth = context.watch<app_auth.AuthProvider>();
+    if (!auth.isLoggedIn || auth.currentUser == null) {
+      return Drawer(
+        backgroundColor: const Color(0xFF0C0C10),
+        child: Center(
+          child: Text(
+            'Sign in to view history',
+            style: GoogleFonts.inter(color: Colors.white54),
+          ),
+        ),
+      );
+    }
+
+    return Drawer(
+      backgroundColor: const Color(0xFF0C0C10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(
+              top: 60,
+              left: 24,
+              bottom: 20,
+              right: 24,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'History',
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white54),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: Color(0xFF1C1C22), height: 1),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('ai_history')
+                  .doc(auth.currentUser!.uid)
+                  .collection('history')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF4A89FF)),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error loading history',
+                      style: GoogleFonts.inter(color: Colors.redAccent),
+                    ),
+                  );
+                }
+                final docs = snapshot.data?.docs ?? [];
+                if (docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No history yet',
+                      style: GoogleFonts.inter(color: Colors.white38),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    final prompt = data['prompt'] as String? ?? 'No prompt';
+                    final topPick = data['top_pick'] as String? ?? 'Unknown';
+                    return InkWell(
+                      onTap: () {
+                        final responseJson = data['response_json'];
+                        if (responseJson != null) {
+                          Navigator.pop(context);
+                          _showResults(
+                            AssistantResponse.fromJson(responseJson),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF141418),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF24242A)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              prompt,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Result: $topPick',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF00D4AA),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1459,17 +1645,15 @@ class _PremiumCTAState extends State<_PremiumCTA> {
             gradient: locked
                 ? null
                 : (enabled
-                    ? const LinearGradient(
-                        colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
-                      )
-                    : null),
+                      ? const LinearGradient(
+                          colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
+                        )
+                      : null),
             color: locked
                 ? const Color(0xFF14141C)
                 : (enabled ? null : Colors.white12),
             borderRadius: BorderRadius.circular(20),
-            border: locked
-                ? Border.all(color: const Color(0xFF252533))
-                : null,
+            border: locked ? Border.all(color: const Color(0xFF252533)) : null,
             boxShadow: enabled
                 ? [
                     BoxShadow(
@@ -1494,8 +1678,11 @@ class _PremiumCTAState extends State<_PremiumCTA> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (locked) ...[
-                        const Icon(Icons.lock_rounded,
-                            size: 16, color: Color(0xFF4A89FF)),
+                        const Icon(
+                          Icons.lock_rounded,
+                          size: 16,
+                          color: Color(0xFF4A89FF),
+                        ),
                         const SizedBox(width: 10),
                       ],
                       Text(
