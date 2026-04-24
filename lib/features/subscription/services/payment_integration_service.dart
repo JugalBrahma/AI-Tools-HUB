@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
-import 'package:toolshub/core/utils/html_stub.dart' if (dart.library.html) 'dart:html' as html;
+import 'package:toolshub/core/utils/html_stub.dart'
+    if (dart.library.html) 'dart:html'
+    as html;
 
 class PaymentIntegrationService {
-  static const String _n8nWebhookUrl = 'https://n8n.srv1563394.hstgr.cloud/webhook-test/create-payment';
+  static const String _n8nWebhookUrl =
+      'https://n8n.srv1563394.hstgr.cloud/webhook-test/create-payment';
 
   /// Sends subscription data to n8n to initiate a payment session or record intent.
   /// [amount] should be in paise (e.g., 10000 for ₹100.00)
@@ -13,17 +15,17 @@ class PaymentIntegrationService {
     required String userEmail,
     required int amountPaise,
     required String plan,
+    required String currency,
+    required int planDays,
+    required String purchaseDate,
+    required String expiryDate,
   }) async {
     final callbackUrl = html.window.location.origin;
 
     print('🚀 CALLING N8N: $_n8nWebhookUrl');
-    print('📦 PAYLOAD: ${{
-      'uid': uid,
-      'plan': plan,
-      'amount_paise': amountPaise,
-      'user_email': userEmail,
-      'callback_url': callbackUrl,
-    }}');
+    print(
+      '📦 PAYLOAD: ${{'uid': uid, 'plan': plan, 'plan_days': planDays, 'purchase_date': purchaseDate, 'expiry_date': expiryDate, 'amount_paise': amountPaise, 'currency': currency, 'user_email': userEmail, 'callback_url': callbackUrl}}',
+    );
 
     try {
       final response = await http.post(
@@ -35,7 +37,11 @@ class PaymentIntegrationService {
         body: jsonEncode({
           'uid': uid,
           'plan': plan,
+          'plan_days': planDays,
+          'purchase_date': purchaseDate,
+          'expiry_date': expiryDate,
           'amount_paise': amountPaise,
+          'currency': currency,
           'user_email': userEmail,
           'callback_url': callbackUrl,
         }),
@@ -46,7 +52,7 @@ class PaymentIntegrationService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final dynamic decoded = jsonDecode(response.body);
-        
+
         // Handle if response is a List (common in n8n)
         Map<String, dynamic>? data;
         if (decoded is List && decoded.isNotEmpty) {

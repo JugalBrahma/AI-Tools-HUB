@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart';
 import 'package:toolshub/features/subscription/services/payment_integration_service.dart';
+import 'package:toolshub/features/subscription/models/price_plan.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
 import 'package:toolshub/core/utils/html_stub.dart'
     if (dart.library.html) 'dart:html'
@@ -21,6 +22,25 @@ class SubscriptionScreen extends StatefulWidget {
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   bool _isProcessing = false;
   String? _processingPlan;
+  late PricePlan _activePlan;
+
+  @override
+  void initState() {
+    super.initState();
+    _activePlan = _detectPlan();
+  }
+
+  /// Detects India via locale country code → all locales → IST timezone offset.
+  PricePlan _detectPlan() {
+    final dispatcher = WidgetsBinding.instance.platformDispatcher;
+    if (dispatcher.locale.countryCode == 'IN') return PricePlan.india;
+    if (dispatcher.locales.any((l) => l.countryCode == 'IN'))
+      return PricePlan.india;
+    final tzOffset = DateTime.now().timeZoneOffset.inMinutes;
+    debugPrint('🌍 TZ offset: ${tzOffset}min');
+    if (tzOffset == 330) return PricePlan.india; // IST = UTC+5:30
+    return PricePlan.global;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +57,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   _buildHeader(),
                   const SizedBox(height: 48),
                   _buildPricingCards(),
-                  const SizedBox(height: 60),
                   _buildTrustBadges(),
+                  const SizedBox(height: 48),
+                  _buildTestPlanContainer(),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -116,6 +137,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Widget _buildPricingCards() {
+    final isIndia = _activePlan.isIndia;
+    final trialPlan = PricePlan.getTrial(isIndia);
+    final proPlan = PricePlan.getPro(isIndia);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 800) {
@@ -134,8 +159,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               Expanded(
                 child: _pricingCard(
                   'Trial',
-                  '1',
+                  trialPlan.displayPrice.replaceAll(trialPlan.symbol, ''),
                   ['Full AI Access', 'Try Pro Features', '4 Days Duration'],
+                  plan: trialPlan,
                   suffix: '/4 days',
                   subLabel: 'One-time payment',
                   isFeatured: true,
@@ -144,12 +170,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               ),
               const SizedBox(width: 24),
               Expanded(
-                child: _pricingCard('Pro', '7', [
-                  'AI Assistant V2',
-                  'Unlimited Bookmarks',
-                  'Daily Briefings',
-                  'Priority Support',
-                ]),
+                child: _pricingCard(
+                  'Pro',
+                  proPlan.displayPrice.replaceAll(proPlan.symbol, ''),
+                  [
+                    'AI Assistant V2',
+                    'Unlimited Bookmarks',
+                    'Daily Briefings',
+                    'Priority Support',
+                  ],
+                  plan: proPlan,
+                ),
               ),
             ],
           );
@@ -164,20 +195,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               const SizedBox(height: 24),
               _pricingCard(
                 'Trial',
-                '1',
+                trialPlan.displayPrice.replaceAll(trialPlan.symbol, ''),
                 ['Full AI Access', 'Try Pro Features', '4 Days Duration'],
+                plan: trialPlan,
                 suffix: '/4 days',
                 subLabel: 'One-time payment',
                 isFeatured: true,
                 badgeText: 'TRIAL OFFER',
               ),
               const SizedBox(height: 24),
-              _pricingCard('Pro', '7', [
-                'AI Assistant V2',
-                'Unlimited Bookmarks',
-                'Daily Briefings',
-                'Priority Support',
-              ]),
+              _pricingCard(
+                'Pro',
+                proPlan.displayPrice.replaceAll(proPlan.symbol, ''),
+                [
+                  'AI Assistant V2',
+                  'Unlimited Bookmarks',
+                  'Daily Briefings',
+                  'Priority Support',
+                ],
+                plan: proPlan,
+              ),
             ],
           );
         }
@@ -189,6 +226,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     String title,
     String price,
     List<String> features, {
+    PricePlan? plan,
     bool isFeatured = false,
     String suffix = '/mo',
     String subLabel = 'Billed monthly',
@@ -254,7 +292,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '\$$price',
+                '${_activePlan.symbol}$price',
                 style: GoogleFonts.inter(
                   fontSize: 40,
                   fontWeight: FontWeight.w800,
@@ -308,10 +346,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _isProcessing
+              onPressed: (_isProcessing || title == 'Free')
                   ? null
-                  : () => _handleSubscriptionTrigger(title, price),
+                  : () => _handleSubscriptionTrigger(title, plan),
               style: ElevatedButton.styleFrom(
+                disabledBackgroundColor: title == 'Free'
+                    ? const Color(0xFF1A1A24)
+                    : null,
+                disabledForegroundColor: title == 'Free'
+                    ? Colors.white54
+                    : null,
                 backgroundColor: isFeatured
                     ? const Color(0xFF4A89FF)
                     : Colors.white,
@@ -345,11 +389,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     );
   }
 
-  void _handleSubscriptionTrigger(String plan, String price) async {
+  void _handleSubscriptionTrigger(String title, PricePlan? plan) async {
     if (kDebugMode) {
-      print('Subscription button clicked for plan: $plan');
+      print('Subscription button clicked for plan: $title');
     }
-    if (plan == 'Free') return;
+    if (title == 'Free' || plan == null) return;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
@@ -405,7 +449,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     ),
                     child: Row(
                       children: [
-                        // ── Icon ────────────────────────────────────
                         Container(
                           width: 44,
                           height: 44,
@@ -428,8 +471,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           ),
                         ),
                         const SizedBox(width: 14),
-
-                        // ── Text ────────────────────────────────────
                         Expanded(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -455,8 +496,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-
-                        // ── CTA Button ──────────────────────────────
                         ElevatedButton(
                           onPressed: () {
                             Navigator.of(dialogContext).pop();
@@ -496,32 +535,43 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
     setState(() {
       _isProcessing = true;
-      _processingPlan = plan;
+      _processingPlan = title;
     });
 
     try {
-      // Convert price string to int paise (e.g. "19" -> 1900)
-      final amountPaise = (double.parse(price) * 100).toInt();
+      final isTest = plan.tier == SubscriptionTier.test;
+      final planDays = plan.tier == SubscriptionTier.trial
+          ? 4
+          : (plan.tier == SubscriptionTier.pro ? 30 : 0);
+      final purchaseDate = DateTime.now().toUtc().toIso8601String();
+
+      final expiryDate = isTest
+          ? DateTime.now()
+                .toUtc()
+                .add(const Duration(minutes: 2))
+                .toIso8601String()
+          : DateTime.now()
+                .toUtc()
+                .add(Duration(days: planDays))
+                .toIso8601String();
 
       final responseData = await PaymentIntegrationService.sendPaymentDataToN8N(
         uid: user.uid,
         userEmail: user.email ?? '',
-        amountPaise: amountPaise,
-        plan: plan,
+        amountPaise: plan.amountSmallest,
+        plan: isTest ? 'test' : plan.tier.name,
+        currency: plan.currency,
+        planDays: planDays,
+        purchaseDate: purchaseDate,
+        expiryDate: expiryDate,
       );
 
-      // Support both n8n-formatted and raw Razorpay responses
       final paymentUrl =
           responseData?['short_url'] ?? responseData?['payment_url'];
       final status = responseData?['status']?.toString().toLowerCase();
       final isSuccess = status == 'success' || status == 'created';
 
       if (paymentUrl != null && isSuccess) {
-        if (kDebugMode) {
-          print(
-            '✅ Payment link ready. Redirecting in same tab to: $paymentUrl',
-          );
-        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -530,8 +580,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
           );
         }
-        // Redirect in THIS same tab so Razorpay can redirect back here after payment
-        // This is what allows the success detection in AppShell to work
         html.window.location.href = paymentUrl;
       } else {
         if (mounted) {
@@ -588,6 +636,82 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildTestPlanContainer() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF4A4A).withOpacity(0.05),
+        border: Border.all(color: const Color(0xFFFF4A4A).withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.bug_report_rounded,
+                color: Color(0xFFFF4A4A),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Developer Test Plan',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFFF4A4A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Use this ₹1 plan to test the 2-minute expiration logic. It sets "plan": "test" for the webhook.',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.white54,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: (_isProcessing || _processingPlan != null)
+                  ? null
+                  : () =>
+                        _handleSubscriptionTrigger('Test2Min', PricePlan.test),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFFF4A4A)),
+                foregroundColor: const Color(0xFFFF4A4A),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: _isProcessing && _processingPlan == 'Test2Min'
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFFFF4A4A),
+                        ),
+                      ),
+                    )
+                  : Text(
+                      'Test Purchase (₹1)',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

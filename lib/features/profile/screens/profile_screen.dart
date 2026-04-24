@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -59,9 +60,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context, name, email),
+              if (auth.isPro) ...[
+                const SizedBox(height: 24),
+                _PlanInfoCard(auth: auth),
+              ],
               const SizedBox(height: 28),
               _buildStatsRow(context),
               const SizedBox(height: 40),
+              /*
               _buildSectionTitle(
                 'Recently Used',
                 Icons.history_rounded,
@@ -72,6 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               _buildRecentToolsList(context),
               const SizedBox(height: 36),
+              */
               _buildBottomSignOut(auth),
               const SizedBox(height: 120),
               const Footer(),
@@ -638,3 +645,122 @@ class _NotLoggedInView extends StatelessWidget {
     );
   }
 }
+
+// ── Plan Info Card (Live Countdown) ─────────────────────────────────────────
+
+class _PlanInfoCard extends StatefulWidget {
+  final app_auth.AuthProvider auth;
+
+  const _PlanInfoCard({required this.auth});
+
+  @override
+  State<_PlanInfoCard> createState() => _PlanInfoCardState();
+}
+
+class _PlanInfoCardState extends State<_PlanInfoCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.auth.expiryDate == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF131A2A),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF00D4AA).withOpacity(0.3)),
+        ),
+        child: Text(
+          '${widget.auth.plan ?? 'Pro'} Plan Active (Expiry date not available)',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+        ),
+      );
+    }
+
+    final remaining = widget.auth.expiryDate!.difference(DateTime.now());
+    if (remaining.isNegative) return const SizedBox.shrink();
+
+    final days = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
+
+    final timeStr = days > 0
+        ? '$days d $hours h $minutes m $seconds s'
+        : '$hours h $minutes m $seconds s';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131A2A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF00D4AA).withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00D4AA).withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00D4AA).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.workspace_premium_rounded,
+              color: Color(0xFF00D4AA),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${widget.auth.plan ?? 'Pro'} Plan Active',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Expires in: $timeStr',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF00D4AA),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

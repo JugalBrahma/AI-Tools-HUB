@@ -246,10 +246,11 @@ class _AppShellState extends State<AppShell> {
 
                 // ── Nav Links ────────────────────────────────────────
                 _buildDrawerLink('Dashboard', Icons.dashboard_outlined, 0),
-                _buildDrawerLink('Categories', Icons.category_outlined, 1),
+                // _buildDrawerLink('Categories', Icons.category_outlined, 1),
                 _buildDrawerLink('AI Assistant', Icons.smart_toy_outlined, 5),
                 if (auth.isLoggedIn)
                   _buildDrawerLink('Profile', Icons.person_outline_rounded, 2),
+                /*
                 Consumer<BookmarkProvider>(
                   builder: (context, provider, child) {
                     final count = provider.count;
@@ -264,6 +265,7 @@ class _AppShellState extends State<AppShell> {
                     );
                   },
                 ),
+                */
                 _buildDrawerLink(
                   'Trending',
                   Icons.local_fire_department_rounded,
@@ -278,12 +280,14 @@ class _AppShellState extends State<AppShell> {
                       ? _buildStatusBadge(auth)
                       : null,
                 ),
+                /*
                 _buildDrawerLink(
                   'Submit Tool',
                   Icons.add_box_outlined,
                   -1,
                   isComingSoon: true,
                 ),
+                */
 
                 const Spacer(),
 
@@ -677,17 +681,19 @@ class _AppShellState extends State<AppShell> {
                   children: [
                     Text(
                       'Upgrade to Pro',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
+                        fontFamily: 'Inter',
                       ),
                     ),
                     Text(
                       'Unlock all AI features',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withOpacity(0.8),
+                        fontFamily: 'Inter',
                       ),
                     ),
                   ],
