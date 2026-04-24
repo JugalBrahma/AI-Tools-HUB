@@ -42,25 +42,25 @@ class _AnimatedGridBackgroundState extends State<AnimatedGridBackground> {
           // ── Grid pattern ──────────────────────────────────────────────────
           Positioned.fill(child: CustomPaint(painter: _GridPainter())),
 
-          // ── Radial gradient fade for the grid ──────────────────────────────
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.0,
-                  colors: [Colors.transparent, Color(0xFF030303)],
-                  stops: [0.0, 0.8],
-                ),
-              ),
-            ),
-          ),
+          // ── Feature-Specific Background Elements ───────────────────────────
+          // Discovery Section (Hexagons - Structure)
+          const _FloatingShape(type: _ShapeType.hexagon, delay: 0, size: 280, top: 0.1, left: 0.1),
+          const _FloatingShape(type: _ShapeType.hexagon, delay: 2, size: 180, top: 0.15, left: 0.8),
+          
+          // Four Steps / Onboarding (Crosses - Navigation)
+          const _FloatingShape(type: _ShapeType.cross, delay: 1, size: 120, top: 0.3, left: 0.2),
+          const _FloatingShape(type: _ShapeType.cross, delay: 3, size: 100, top: 0.35, left: 0.7),
 
-          // ── Floating Orbs ─────────────────────────────────────────────────
-          const FloatingOrb(delay: 0, size: 300, top: 0.2, left: 0.1),
-          const FloatingOrb(delay: 2, size: 200, top: 0.1, left: 0.75),
-          const FloatingOrb(delay: 4, size: 250, top: 0.6, left: 0.6),
-          const FloatingOrb(delay: 1, size: 180, top: 0.7, left: 0.2),
+          // Trending / Market Dominance (Rising Waves - Growth)
+          const _FloatingShape(type: _ShapeType.wave, delay: 4, size: 200, top: 0.55, left: 0.15),
+          const _FloatingShape(type: _ShapeType.wave, delay: 2, size: 220, top: 0.6, left: 0.85),
+
+          // AI Assistant / Expert Advice (Sparkles - Intelligence)
+          const _FloatingShape(type: _ShapeType.sparkle, delay: 0, size: 150, top: 0.8, left: 0.25),
+          const _FloatingShape(type: _ShapeType.sparkle, delay: 2, size: 180, top: 0.85, left: 0.75),
+
+          // CTA Section (Circles - Completeness)
+          const _FloatingShape(type: _ShapeType.circle, delay: 1, size: 250, top: 0.95, left: 0.5),
 
           // ── Mouse Glow (Optimized with ValueListenableBuilder) ────────────
           ValueListenableBuilder<Offset>(
@@ -121,14 +121,18 @@ class _GridPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class FloatingOrb extends StatefulWidget {
+enum _ShapeType { hexagon, cross, wave, sparkle, circle }
+
+class _FloatingShape extends StatefulWidget {
+  final _ShapeType type;
   final int delay;
   final double size;
   final double top;
   final double left;
 
-  const FloatingOrb({
+  const _FloatingShape({
     super.key,
+    required this.type,
     required this.delay,
     required this.size,
     required this.top,
@@ -136,82 +140,50 @@ class FloatingOrb extends StatefulWidget {
   });
 
   @override
-  State<FloatingOrb> createState() => _FloatingOrbState();
+  State<_FloatingShape> createState() => _FloatingShapeState();
 }
 
-class _FloatingOrbState extends State<FloatingOrb>
+class _FloatingShapeState extends State<_FloatingShape>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _translateY;
   late Animation<double> _opacity;
-  late Animation<double> _scale;
+  late Animation<double> _rotate;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6),
+      duration: Duration(seconds: 8 + widget.delay),
     );
 
     _translateY = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(
-          begin: 0.0,
-          end: -30.0,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(begin: 0.0, end: -30.0).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween(
-          begin: -30.0,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(begin: -30.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
     ]).animate(_controller);
 
     _opacity = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(
-          begin: 0.15,
-          end: 0.3,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(begin: 0.04, end: 0.12).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween(
-          begin: 0.3,
-          end: 0.15,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(begin: 0.12, end: 0.04).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
     ]).animate(_controller);
 
-    _scale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(
-          begin: 1.0,
-          end: 1.1,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(
-          begin: 1.1,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 50,
-      ),
-    ]).animate(_controller);
-
-    // Initial state before delay starts
-    _controller.value = 0;
+    _rotate = Tween<double>(begin: 0, end: 2 * 3.14159).animate(_controller);
 
     Future.delayed(Duration(seconds: widget.delay), () {
-      if (mounted) {
-        _controller.repeat();
-      }
+      if (mounted) _controller.repeat();
     });
   }
 
@@ -223,56 +195,123 @@ class _FloatingOrbState extends State<FloatingOrb>
 
   @override
   Widget build(BuildContext context) {
-    final blurSigma = kIsWeb ? 16.0 : 30.0;
-    
-    final content = AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _translateY.value),
-          child: Transform.scale(
-            scale: _scale.value,
-            child: Opacity(opacity: _opacity.value, child: child),
-          ),
-        );
-      },
-      child: IgnorePointer(
-        child: ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-          child: Container(
-            width: widget.size,
-            height: widget.size,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF6366F1),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    if (kIsWeb) {
-      return Positioned(
-        top: MediaQuery.of(context).size.height * widget.top - (widget.size / 2),
-        left: MediaQuery.of(context).size.width * widget.left - (widget.size / 2),
-        child: content,
-      );
-    }
-
     return Positioned(
       top: MediaQuery.of(context).size.height * widget.top - (widget.size / 2),
       left: MediaQuery.of(context).size.width * widget.left - (widget.size / 2),
-      child: VisibilityDetector(
-        key: Key('orb-${widget.delay}-${widget.top}'),
-        onVisibilityChanged: (info) {
-          if (info.visibleFraction <= 0.0) {
-            if (_controller.isAnimating) _controller.stop();
-          } else {
-            if (!_controller.isAnimating) _controller.repeat();
-          }
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _translateY.value),
+            child: Transform.rotate(
+              angle: widget.type == _ShapeType.wave ? 0 : _rotate.value * (widget.type == _ShapeType.cross ? 0.5 : 1.0),
+              child: Opacity(
+                opacity: _opacity.value,
+                child: CustomPaint(
+                  size: Size(widget.size, widget.size),
+                  painter: _SectionPainter(widget.type),
+                ),
+              ),
+            ),
+          );
         },
-        child: content,
       ),
     );
   }
 }
+
+class _SectionPainter extends CustomPainter {
+  final _ShapeType type;
+  _SectionPainter(this.type);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = _getColor()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final path = Path();
+    final double r = size.width / 2;
+    final double cx = size.width / 2;
+    final double cy = size.height / 2;
+
+    switch (type) {
+      case _ShapeType.hexagon:
+        final double hr = r * 0.7;
+        path.moveTo(cx + hr, cy);
+        for (int i = 1; i <= 6; i++) {
+          final double angle = i * 60 * 3.14159 / 180;
+          path.lineTo(cx + hr * (i == 0 || i == 3 ? 1 : 0.866) * (i == 0 || i == 3 ? 1 : 1), cy); // Simplified
+        }
+        // Correct Hex
+        path.reset();
+        path.moveTo(cx + hr, cy);
+        path.lineTo(cx + hr * 0.5, cy + hr * 0.866);
+        path.lineTo(cx - hr * 0.5, cy + hr * 0.866);
+        path.lineTo(cx - hr, cy);
+        path.lineTo(cx - hr * 0.5, cy - hr * 0.866);
+        path.lineTo(cx + hr * 0.5, cy - hr * 0.866);
+        path.close();
+        break;
+
+      case _ShapeType.cross:
+        final double cr = r * 0.5;
+        path.moveTo(cx - cr, cy);
+        path.lineTo(cx + cr, cy);
+        path.moveTo(cx, cy - cr);
+        path.lineTo(cx, cy + cr);
+        break;
+
+      case _ShapeType.wave:
+        final double wr = r * 0.8;
+        path.moveTo(cx - wr, cy);
+        path.quadraticBezierTo(cx - wr / 2, cy - wr / 2, cx, cy);
+        path.quadraticBezierTo(cx + wr / 2, cy + wr / 2, cx + wr, cy);
+        break;
+
+      case _ShapeType.sparkle:
+        final double sr = r * 0.6;
+        for (int i = 0; i < 4; i++) {
+          final double angle = i * 90 * 3.14159 / 180;
+          path.moveTo(cx, cy);
+          path.lineTo(cx + sr * (i % 2 == 0 ? 1 : 0), cy + sr * (i % 2 == 0 ? 0 : 1));
+          // Wait, simple star
+        }
+        path.reset();
+        path.moveTo(cx, cy - sr);
+        path.quadraticBezierTo(cx + sr * 0.2, cy - sr * 0.2, cx + sr, cy);
+        path.quadraticBezierTo(cx + sr * 0.2, cy + sr * 0.2, cx, cy + sr);
+        path.quadraticBezierTo(cx - sr * 0.2, cy + sr * 0.2, cx - sr, cy);
+        path.quadraticBezierTo(cx - sr * 0.2, cy - sr * 0.2, cx, cy - sr);
+        break;
+
+      case _ShapeType.circle:
+        canvas.drawCircle(Offset(cx, cy), r * 0.6, paint);
+        return;
+    }
+
+    canvas.drawPath(path, paint);
+    
+    // Subtle glow
+    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+    paint.strokeWidth = 3.0;
+    canvas.drawPath(path, paint);
+  }
+
+  Color _getColor() {
+    switch (type) {
+      case _ShapeType.hexagon: return const Color(0xFF6366F1);
+      case _ShapeType.cross: return const Color(0xFF00FFD1);
+      case _ShapeType.wave: return const Color(0xFFFF9900);
+      case _ShapeType.sparkle: return const Color(0xFF9933FF);
+      case _ShapeType.circle: return const Color(0xFF00A8FF);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+
+

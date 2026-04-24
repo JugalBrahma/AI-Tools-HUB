@@ -5,28 +5,31 @@ import 'package:toolshub/core/utils/html_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:toolshub/features/auth/screens/login_screen.dart';
-import 'package:toolshub/features/home/screens/home_screen.dart';
-import 'package:toolshub/features/categories/screens/categories_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:toolshub/features/home/widgets/top_nav_bar.dart';
-import 'package:toolshub/features/bookmarks/screens/bookmarks_screen.dart';
-import 'package:toolshub/features/profile/screens/profile_screen.dart';
-import 'package:toolshub/features/trending/screens/trending_screen.dart';
-import 'package:toolshub/features/ai_assistant/screens/ai_assistant_screen.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
+import 'package:toolshub/core/providers/pinned_tools_provider.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
 
+
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  final Widget child;
+  const AppShell({super.key, required this.child});
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  int _currentIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  int get _currentIndex {
+    final location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/trending')) return 4;
+    if (location.startsWith('/assistant')) return 5;
+    return 0;
+  }
 
   @override
   void initState() {
@@ -163,7 +166,17 @@ class _AppShellState extends State<AppShell> {
 
   void _navigate(int index) {
     if (index == _currentIndex) return;
-    setState(() => _currentIndex = index);
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 4:
+        context.go('/trending');
+        break;
+      case 5:
+        context.go('/assistant');
+        break;
+    }
   }
 
   @override
@@ -180,38 +193,11 @@ class _AppShellState extends State<AppShell> {
             onMenuTap: () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              child: KeyedSubtree(
-                key: ValueKey<int>(_currentIndex),
-                child: _buildCurrentPage(),
-              ),
-            ),
+            child: widget.child,
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildCurrentPage() {
-    switch (_currentIndex) {
-      case 0:
-        return const HomeScreen();
-      case 1:
-        return const CategoriesPage();
-      case 2:
-        return ProfileScreen(onDismiss: () {});
-      case 3:
-        return const BookmarksScreen();
-      case 4:
-        return const TrendingScreen();
-      case 5:
-        return const AiAssistantScreen();
-      default:
-        return const HomeScreen();
-    }
   }
 
   Widget _buildRightDrawer() {
@@ -232,7 +218,7 @@ class _AppShellState extends State<AppShell> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: auth.isLoggedIn
-                      ? _buildLoggedInHeader(auth)
+                      ? _buildLoggedInHeader(context, auth)
                       : _buildLoginPrompt(context),
                 ),
 
@@ -244,35 +230,40 @@ class _AppShellState extends State<AppShell> {
                 const Divider(color: Color(0xFF15151A)),
                 const SizedBox(height: 8),
 
-                // ── Nav Links ────────────────────────────────────────
-                _buildDrawerLink('Dashboard', Icons.dashboard_outlined, 0),
-                // _buildDrawerLink('Categories', Icons.category_outlined, 1),
-                _buildDrawerLink('AI Assistant', Icons.smart_toy_outlined, 5),
-                if (auth.isLoggedIn)
-                  _buildDrawerLink('Profile', Icons.person_outline_rounded, 2),
-                /*
-                Consumer<BookmarkProvider>(
+                // ── Main Exploration ──────────────────────────────────
+                _buildDrawerSectionHeader('EXPLORE'),
+                _buildDrawerLink('Marketplace', Icons.grid_view_rounded, 0),
+                _buildDrawerLink('Trending Now', Icons.local_fire_department_rounded, 4),
+                _buildDrawerLink('AI Intelligence', Icons.smart_toy_rounded, 5),
+                
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFF15151A)),
+                const SizedBox(height: 16),
+
+                // ── Your Workspace ────────────────────────────────────
+                _buildDrawerSectionHeader('YOUR WORKSPACE'),
+                Consumer<PinnedToolsProvider>(
                   builder: (context, provider, child) {
                     final count = provider.count;
                     return _buildDrawerLink(
-                      'Saved Tools',
-                      count > 0
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_border_rounded,
-                      3,
+                      'Bookmarks',
+                      Icons.bookmarks_rounded,
+                      -3, // Custom index for Pinned Tools (redirects to Profile)
                       color: count > 0 ? const Color(0xFF00D4AA) : null,
                       badge: count > 0 ? _buildCountBadge(count) : null,
                     );
                   },
                 ),
-                */
+
+
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFF15151A)),
+                const SizedBox(height: 16),
+
+                // ── Membership ────────────────────────────────────────
+                _buildDrawerSectionHeader('MEMBERSHIP'),
                 _buildDrawerLink(
-                  'Trending',
-                  Icons.local_fire_department_rounded,
-                  4,
-                ),
-                _buildDrawerLink(
-                  'Membership',
+                  'Subscription Plan',
                   Icons.stars_rounded,
                   -2,
                   color: const Color(0xFFFFD700),
@@ -280,6 +271,7 @@ class _AppShellState extends State<AppShell> {
                       ? _buildStatusBadge(auth)
                       : null,
                 ),
+
                 /*
                 _buildDrawerLink(
                   'Submit Tool',
@@ -294,13 +286,7 @@ class _AppShellState extends State<AppShell> {
                 const Divider(color: Color(0xFF15151A)),
                 const SizedBox(height: 8),
 
-                _buildDrawerLink(
-                  'Settings',
-                  Icons.settings_outlined,
-                  -1,
-                  isComingSoon: true,
-                ),
-                const SizedBox(height: 4),
+
 
                 // ── Auth Action at bottom ────────────────────────────
                 if (auth.isLoggedIn)
@@ -318,7 +304,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   // ── Logged In Header ────────────────────────────────────────────────────────
-  Widget _buildLoggedInHeader(app_auth.AuthProvider auth) {
+  Widget _buildLoggedInHeader(BuildContext context, app_auth.AuthProvider auth) {
     final user = auth.currentUser;
     final name = user?.displayName ?? user?.email?.split('@').first ?? 'User';
     final email = user?.email ?? '';
@@ -326,7 +312,9 @@ class _AppShellState extends State<AppShell> {
         ? name.substring(0, 2).toUpperCase()
         : name[0].toUpperCase();
 
-    return Row(
+    return GestureDetector(
+      onTap: () => AppNavigator.toProfile(context, closeDrawer: true),
+      child: Row(
       children: [
         Stack(
           children: [
@@ -404,6 +392,7 @@ class _AppShellState extends State<AppShell> {
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -474,7 +463,7 @@ class _AppShellState extends State<AppShell> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Save tools, track history & more',
+                    'Ask AI, track trending & more',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: const Color(0xFF888888),
@@ -546,6 +535,21 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  Widget _buildDrawerSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Text(
+        title,
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: Colors.white24,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
   // ── Drawer Nav Link ─────────────────────────────────────────────────────────
   Widget _buildDrawerLink(
     String title,
@@ -563,9 +567,15 @@ class _AppShellState extends State<AppShell> {
             AppNavigator.toSubscription(context, closeDrawer: true);
             return;
           }
+          if (index == -3) {
+            AppNavigator.toBookmarks(context, closeDrawer: true);
+            return;
+          }
+
           _navigate(index);
           Navigator.pop(context);
         } else if (isComingSoon) {
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(

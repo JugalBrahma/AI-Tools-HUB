@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:toolshub/features/auth/screens/login_screen.dart';
 import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
 import 'package:toolshub/features/profile/screens/profile_screen.dart';
+import 'package:toolshub/features/bookmarks/screens/bookmarks_screen.dart';
+
 
 /// Centralized navigation helper for the app.
 ///
@@ -47,10 +49,11 @@ class AppNavigator {
   /// Opens the login screen with a fade transition.
   /// [closeDrawer] — pass true when navigating from an open drawer.
   static void toLogin(BuildContext context, {bool closeDrawer = false}) {
-    if (closeDrawer) Navigator.pop(context);
-    Navigator.of(context).push(
+    final navigator = Navigator.of(context);
+    if (closeDrawer) navigator.pop();
+    navigator.push(
       _fadeRoute(
-        LoginScreen(onDismiss: () => Navigator.of(context).pop()),
+        LoginScreen(onDismiss: () => navigator.pop()),
       ),
     );
   }
@@ -61,10 +64,11 @@ class AppNavigator {
   /// [closeDrawer] — pass true when navigating from an open drawer.
   static void toSubscription(BuildContext context,
       {bool closeDrawer = false}) {
-    if (closeDrawer) Navigator.pop(context);
-    Navigator.of(context).push(
+    final navigator = Navigator.of(context);
+    if (closeDrawer) navigator.pop();
+    navigator.push(
       _slideUpRoute(
-        SubscriptionScreen(onDismiss: () => Navigator.of(context).pop()),
+        SubscriptionScreen(onDismiss: () => navigator.pop()),
       ),
     );
   }
@@ -74,13 +78,29 @@ class AppNavigator {
   /// Opens the profile screen as a full-screen dialog.
   /// [closeDrawer] — pass true when navigating from an open drawer.
   static void toProfile(BuildContext context, {bool closeDrawer = false}) {
-    if (closeDrawer) Navigator.pop(context);
-    Navigator.of(context).push(
+    final navigator = Navigator.of(context);
+    if (closeDrawer) navigator.pop();
+    navigator.push(
       _slideUpRoute(
-        ProfileScreen(onDismiss: () => Navigator.of(context).pop()),
+        ProfileScreen(onDismiss: () => navigator.pop()),
       ),
     );
   }
+
+  // ── Bookmarks ────────────────────────────────────────────────────────────
+
+  /// Opens the bookmarks screen as a full-screen dialog.
+  /// [closeDrawer] — pass true when navigating from an open drawer.
+  static void toBookmarks(BuildContext context, {bool closeDrawer = false}) {
+    final navigator = Navigator.of(context);
+    if (closeDrawer) navigator.pop();
+    navigator.push(
+      _slideUpRoute(
+        BookmarksScreen(onDismiss: () => navigator.pop()),
+      ),
+    );
+  }
+
 
   // ── Generic Push ─────────────────────────────────────────────────────────
 

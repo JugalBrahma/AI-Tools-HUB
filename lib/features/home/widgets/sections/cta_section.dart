@@ -36,19 +36,19 @@ class CtaSection extends StatelessWidget {
                     children: [
                       _buildHeader(isCompact: true),
                       const SizedBox(height: 26),
-                      const _BenefitTile(
-                        icon: Icons.tune_rounded,
-                        title: 'Compare by actual use case',
+                       const _BenefitTile(
+                        icon: Icons.trending_up_rounded,
+                        title: 'Discover trending AI models',
                       ),
                       const SizedBox(height: 12),
                       const _BenefitTile(
-                        icon: Icons.bookmark_added_rounded,
-                        title: 'Create a shortlist before signup',
+                        icon: Icons.auto_awesome_rounded,
+                        title: 'Leverage AI-driven insights',
                       ),
                       const SizedBox(height: 12),
                       const _BenefitTile(
                         icon: Icons.speed_rounded,
-                        title: 'Decide faster with less trial-and-error',
+                        title: 'Decide faster with zero guesswork',
                       ),
                       const SizedBox(height: 26),
                       const _CtaButton(),
@@ -67,18 +67,18 @@ class CtaSection extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const _BenefitTile(
-                              icon: Icons.tune_rounded,
-                              title: 'Compare by actual use case',
+                              icon: Icons.trending_up_rounded,
+                              title: 'Discover trending AI models',
                             ),
                             const SizedBox(height: 12),
                             const _BenefitTile(
-                              icon: Icons.bookmark_added_rounded,
-                              title: 'Create a shortlist before signup',
+                              icon: Icons.auto_awesome_rounded,
+                              title: 'Leverage AI-driven insights',
                             ),
                             const SizedBox(height: 12),
                             const _BenefitTile(
                               icon: Icons.speed_rounded,
-                              title: 'Decide faster with less trial-and-error',
+                              title: 'Decide faster with zero guesswork',
                             ),
                             const SizedBox(height: 28),
                             const _CtaButton(),

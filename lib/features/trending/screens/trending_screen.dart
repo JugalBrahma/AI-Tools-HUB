@@ -494,7 +494,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = color
+      ..color = color.withOpacity(0.1)
       ..strokeWidth = 0.5;
     for (double i = 0; i < size.width; i += 20) {
       canvas.drawLine(Offset(i, 0), Offset(i, size.height), p);
@@ -1094,12 +1094,12 @@ class _CategorySidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const categories = [
-      ('AI Trendings', Icons.auto_awesome_rounded, true),
-      ('Students', Icons.school_rounded, false),
-      ('Business', Icons.business_center_rounded, false),
-      ('Content', Icons.draw_rounded, false),
-      ('Growth', Icons.trending_up_rounded, false),
-      ('Lifestyle', Icons.spa_rounded, false),
+      ('AI Trendings', Icons.auto_awesome_rounded, true, false),
+      ('Students', Icons.school_rounded, false, true),
+      ('Business', Icons.business_center_rounded, false, true),
+      ('Content', Icons.draw_rounded, false, true),
+      ('Growth', Icons.trending_up_rounded, false, true),
+      ('Lifestyle', Icons.spa_rounded, false, true),
     ];
 
     return Column(
@@ -1117,7 +1117,7 @@ class _CategorySidebar extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         ...categories.map(
-          (cat) => _SidebarItem(title: cat.$1, icon: cat.$2, isActive: cat.$3),
+          (cat) => _SidebarItem(title: cat.$1, icon: cat.$2, isActive: cat.$3, isComingSoon: cat.$4),
         ),
         const SizedBox(height: 32),
         // Premium Support Card or similar
@@ -1161,11 +1161,13 @@ class _SidebarItem extends StatefulWidget {
   final String title;
   final IconData icon;
   final bool isActive;
+  final bool isComingSoon;
 
   const _SidebarItem({
     required this.title,
     required this.icon,
     this.isActive = false,
+    this.isComingSoon = false,
   });
 
   @override
@@ -1215,6 +1217,25 @@ class _SidebarItemState extends State<_SidebarItem> {
                 color: widget.isActive ? Colors.white : Colors.white60,
               ),
             ),
+            if (widget.isComingSoon) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00A8FF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'SOON',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 7,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF00A8FF),
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ],
             if (widget.isActive) ...[
               const Spacer(),
               Container(

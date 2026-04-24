@@ -88,9 +88,9 @@ class WhatsHotSection extends StatelessWidget {
                       ),
                       _TrendingRow(
                         rank: '05',
-                        name: 'Bookmark Shortlist',
-                        category: 'Decision',
-                        growth: 'Team review',
+                        name: 'Ask AI Assistant',
+                        category: 'Personalized',
+                        growth: 'Expert help',
                         users: 'Step 4',
                       ),
                     ],

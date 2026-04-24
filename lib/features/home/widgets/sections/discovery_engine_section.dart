@@ -50,7 +50,7 @@ class DiscoveryEngineSection extends StatelessWidget {
         SizedBox(
           width: 500,
           child: Text(
-            'Pick tools with confidence, clearer comparison, and simple shortlisting to find the right stack for your job.',
+            'Discover the perfect AI tools instantly. Use our intelligent assistant and real-time trending data to elevate your workflow.',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 16,
@@ -98,21 +98,21 @@ class DiscoveryEngineSection extends StatelessWidget {
                   ),
                   _DiscoveryCard(
                     width: isMobile ? double.infinity : (wrapWidth - 32) / 2,
-                    icon: Icons.bolt_rounded,
-                    title: 'Choose by Actual Use Case',
+                    icon: Icons.auto_awesome_rounded,
+                    title: 'Talk to the AI Assistant',
                     desc:
-                        'Match tools to coding, marketing, writing, or design needs using clear categories.',
-                    stat: 'Better fit decisions',
+                        'Describe your workflow and let our smart assistant recommend the exact tools you need.',
+                    stat: 'Personalized advice',
                     statLabel: 'BENEFIT',
                     color: const Color(0xFFFF3366),
                   ),
                   _DiscoveryCard(
                     width: isMobile ? double.infinity : (wrapWidth - 32) / 2,
-                    icon: Icons.verified_user_outlined,
-                    title: 'Trusted & Verified',
+                    icon: Icons.sensors_rounded,
+                    title: 'Real-time Telemetry',
                     desc:
-                        'Open tool pages quickly, verify value yourself, and bookmark finalists for your team.',
-                    stat: 'Shortlist with clarity',
+                        'Monitor live trending data to see which tools are actually dominating the market right now.',
+                    stat: 'Curated intelligence',
                     statLabel: 'BENEFIT',
                     color: const Color(0xFF9933FF),
                   ),

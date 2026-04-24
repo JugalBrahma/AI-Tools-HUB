@@ -524,21 +524,19 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 
   Widget _buildFilterScroll(List<FilterConfig> filters) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      clipBehavior: Clip.none,
-      child: Row(
-        children: filters
-            .map(
-              (f) => _FilterPill(
-                config: f,
-                enabled: !_isLoading,
-                currentValue: _state.selections[f.label],
-                onChanged: (val) => _onSelectionChanged(f, val),
-              ),
-            )
-            .toList(),
-      ),
+    return Wrap(
+      spacing: 0,
+      runSpacing: 10,
+      children: filters
+          .map(
+            (f) => _FilterPill(
+              config: f,
+              enabled: !_isLoading,
+              currentValue: _state.selections[f.label],
+              onChanged: (val) => _onSelectionChanged(f, val),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -680,6 +678,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                   .collection('history')
                   .orderBy('timestamp', descending: true)
                   .snapshots(),
+
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -710,7 +709,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     final data = docs[index].data() as Map<String, dynamic>;
                     final prompt = data['prompt'] as String? ?? 'No prompt';
                     final topPick = data['top_pick'] as String? ?? 'Unknown';
-                    return InkWell(
+                    return _HistoryItem(
+                      prompt: prompt,
+                      topPick: topPick,
                       onTap: () {
                         final responseJson = data['response_json'];
                         if (responseJson != null) {
@@ -720,39 +721,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           );
                         }
                       },
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF141418),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF24242A)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              prompt,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Result: $topPick',
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF00D4AA),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     );
                   },
                 );
@@ -760,6 +728,86 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── History Item Widget ───────────────────────────────────────────────────────
+
+class _HistoryItem extends StatefulWidget {
+  final String prompt;
+  final String topPick;
+  final VoidCallback onTap;
+
+  const _HistoryItem({
+    required this.prompt,
+    required this.topPick,
+    required this.onTap,
+  });
+
+  @override
+  State<_HistoryItem> createState() => _HistoryItemState();
+}
+
+class _HistoryItemState extends State<_HistoryItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: _isHovered ? const Color(0xFF1C1C22) : const Color(0xFF141418),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isHovered
+                  ? const Color(0xFF4A89FF).withOpacity(0.5)
+                  : const Color(0xFF24242A),
+            ),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF4A89FF).withOpacity(0.15),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.prompt,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Result: ${widget.topPick}',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF00D4AA),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1070,7 +1118,11 @@ class _RecommendationCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (isTop) _buildTopPickBadge(),
+                      _BookmarkToolButton(rec: rec),
+                      if (isTop) ...[
+                        const SizedBox(width: 8),
+                        _buildTopPickBadge(),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -1702,6 +1754,120 @@ class _PremiumCTAState extends State<_PremiumCTA> {
                   ),
           ),
         ),
+      ),
+    );
+  }
+}
+class _BookmarkToolButton extends StatefulWidget {
+  final Recommendation rec;
+  const _BookmarkToolButton({required this.rec});
+
+  @override
+  State<_BookmarkToolButton> createState() => _BookmarkToolButtonState();
+}
+
+class _BookmarkToolButtonState extends State<_BookmarkToolButton> {
+  bool _isSaving = false;
+  bool _isSaved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfSaved();
+  }
+
+  Future<void> _checkIfSaved() async {
+    final auth = context.read<app_auth.AuthProvider>();
+    if (!auth.isLoggedIn || auth.currentUser == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('ai_history')
+        .doc(auth.currentUser!.uid)
+        .collection('bookmarks')
+        .where('toolName', isEqualTo: widget.rec.toolName)
+        .get();
+
+    if (mounted && query.docs.isNotEmpty) {
+      setState(() => _isSaved = true);
+    }
+  }
+
+  Future<void> _toggleSave() async {
+    final auth = context.read<app_auth.AuthProvider>();
+    if (!auth.isLoggedIn || auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to bookmark tools.')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final collection = FirebaseFirestore.instance
+          .collection('ai_history')
+          .doc(auth.currentUser!.uid)
+          .collection('bookmarks');
+
+      if (_isSaved) {
+        // Remove
+        final query = await collection
+            .where('toolName', isEqualTo: widget.rec.toolName)
+            .get();
+
+        for (var doc in query.docs) {
+          await doc.reference.delete();
+        }
+        setState(() => _isSaved = false);
+      } else {
+        // Add
+        await collection.add({
+          ...widget.rec.toJson(),
+          'pinnedAt': FieldValue.serverTimestamp(),
+        });
+        setState(() => _isSaved = true);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to bookmark: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _isSaving ? null : _toggleSave,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: _isSaved
+              ? const Color(0xFF00D4AA).withOpacity(0.15)
+              : const Color(0xFF1C1C22),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isSaved
+                ? const Color(0xFF00D4AA).withOpacity(0.3)
+                : Colors.transparent,
+          ),
+        ),
+        child: _isSaving
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF00D4AA),
+                ),
+              )
+            : Icon(
+                _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                size: 18,
+                color: _isSaved ? const Color(0xFF00D4AA) : Colors.white24,
+              ),
       ),
     );
   }

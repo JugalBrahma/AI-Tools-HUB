@@ -61,7 +61,7 @@ class PopularToolsGrid extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'LIVE_FEATURED_TOOLS',
+                            'ESSENTIAL_STACK',
                             style: GoogleFonts.ibmPlexMono(
                               fontSize: 8,
                               fontWeight: FontWeight.w700,
@@ -72,7 +72,7 @@ class PopularToolsGrid extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Top Rated AI Tools',
+                          'Industry Leading Tools',
                           style: GoogleFonts.inter(
                             fontSize: width < 600 ? 28 : 40,
                             fontWeight: FontWeight.w900,
@@ -436,7 +436,7 @@ class _PopularToolCardState extends State<_PopularToolCard> {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            tool.category.toUpperCase(),
+                            _getDisplayCategory(tool.name, tool.category),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.ibmPlexMono(
@@ -457,6 +457,21 @@ class _PopularToolCardState extends State<_PopularToolCard> {
         },
       ),
     );
+  }
+
+  String _getDisplayCategory(String name, String original) {
+    final n = name.toLowerCase();
+    if (n.contains('chatgpt') || n.contains('claude') || n.contains('gemini')) return 'AI CHAT';
+    if (n.contains('perplexity')) return 'AI SEARCH';
+    if (n.contains('midjourney') || n.contains('leonardo')) return 'IMAGE GEN';
+    if (n.contains('cursor') || n.contains('copilot') || n.contains('replit')) return 'CODING';
+    if (n.contains('runway') || n.contains('pika') || n.contains('sora') || n.contains('veo')) return 'VIDEO GEN';
+    if (n.contains('notion') || n.contains('jasper') || n.contains('writesonic')) return 'WRITING';
+    if (n.contains('canva') || n.contains('framer') || n.contains('gamma')) return 'DESIGN';
+    if (n.contains('elevenlabs')) return 'VOICE GEN';
+    if (n.contains('suno')) return 'MUSIC GEN';
+    if (n.contains('bolt') || n.contains('lovable') || n.contains('v0')) return 'VIBE CODING';
+    return original.toUpperCase();
   }
 }
 

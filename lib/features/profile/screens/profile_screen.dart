@@ -9,9 +9,14 @@ import 'package:toolshub/core/providers/tool_provider.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/history_provider.dart';
 import 'package:toolshub/core/models/tool_model.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, required void Function() onDismiss});
+  final VoidCallback onDismiss;
+
+  const ProfileScreen({super.key, required this.onDismiss});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -25,7 +30,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final auth = context.watch<app_auth.AuthProvider>();
 
     if (!auth.isLoggedIn) {
-      return const _NotLoggedInView();
+      return Scaffold(
+        backgroundColor: const Color(0xFF030303),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded, color: Colors.white70),
+            onPressed: widget.onDismiss,
+          ),
+        ),
+        body: const _NotLoggedInView(),
+      );
     }
 
     final user = auth.currentUser;
@@ -35,12 +51,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : 'User';
     final String email = user?.email ?? '';
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 60),
-          _buildLoggedInContent(context, name, email, auth),
-        ],
+    return Scaffold(
+      backgroundColor: const Color(0xFF030303),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+          onPressed: widget.onDismiss,
+        ),
+        title: Text(
+          'Profile',
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            _buildLoggedInContent(context, name, email, auth),
+          ],
+        ),
       ),
     );
   }
@@ -67,18 +103,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 28),
               _buildStatsRow(context),
               const SizedBox(height: 40),
-              /*
-              _buildSectionTitle(
-                'Recently Used',
-                Icons.history_rounded,
-                isExpanded: _isHistoryExpanded,
-                onToggle: () =>
-                    setState(() => _isHistoryExpanded = !_isHistoryExpanded),
-              ),
-              const SizedBox(height: 16),
-              _buildRecentToolsList(context),
-              const SizedBox(height: 36),
-              */
+
+
               _buildBottomSignOut(auth),
               const SizedBox(height: 120),
               const Footer(),
@@ -253,9 +279,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _buildStatCard(
               width: cardWidth,
-              label: 'Saved',
-              value: '${bookmarkProvider.count}',
-              icon: Icons.bookmark_rounded,
+              label: 'Total Tools',
+              value: 'Live',
+              icon: Icons.grid_view_rounded,
               color: const Color(0xFF00A8FF),
             ),
             _buildStatCard(
@@ -374,146 +400,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+
+
+  Future<void> _launchUrl(String url) async {
+    if (url.isEmpty) return;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   Widget _buildRecentToolsList(BuildContext context) {
-    final toolProvider = context.watch<ToolProvider>();
-    final historyProvider = context.watch<HistoryProvider>();
-
-    if (historyProvider.recentToolIds.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F1218),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF202636)),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'No recent activity yet',
-          style: GoogleFonts.inter(color: Colors.white38),
-        ),
-      );
-    }
-
-    final allTools = toolProvider.categories.expand((c) => c.tools).toList();
-    final recentTools = <ToolInfo>[];
-
-    for (var id in historyProvider.recentToolIds) {
-      try {
-        final tool = allTools.firstWhere((t) => t.docId == id);
-        recentTools.add(tool);
-      } catch (_) {}
-    }
-
-    final displayedTools = _isHistoryExpanded
-        ? recentTools
-        : recentTools.take(3).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF10141C),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF1E2634)),
-          ),
-          child: Column(
-            children: List.generate(displayedTools.length, (index) {
-              final tool = displayedTools[index];
-              return Column(
-                children: [
-                  _buildRecentItem(tool),
-                  if (index != displayedTools.length - 1)
-                    const Divider(height: 1, color: Color(0xFF202838)),
-                ],
-              );
-            }),
-          ),
-        ),
-        if (recentTools.length > 3)
-          Center(
-            child: TextButton.icon(
-              onPressed: () =>
-                  setState(() => _isHistoryExpanded = !_isHistoryExpanded),
-              icon: AnimatedRotation(
-                turns: _isHistoryExpanded ? 0.5 : 0,
-                duration: const Duration(milliseconds: 250),
-                child: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 18,
-                  color: Colors.white38,
-                ),
-              ),
-              label: Text(
-                _isHistoryExpanded
-                    ? 'Show less'
-                    : 'Show all ${recentTools.length}',
-                style: GoogleFonts.inter(fontSize: 12, color: Colors.white38),
-              ),
-            ),
-          ),
-      ],
-    );
+    // ... (rest of the code if needed, but I'll skip for now as I replaced it)
+    return const SizedBox.shrink();
   }
 
-  Widget _buildRecentItem(ToolInfo tool) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: tool.accentColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.bolt_rounded, color: tool.accentColor, size: 16),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tool.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Opened via Try it',
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white38),
-                ),
-              ],
-            ),
-          ),
-          if (tool.pricing.trim().isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-              ),
-              child: Text(
-                tool.pricing.toUpperCase(),
-                style: GoogleFonts.inter(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white38,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 class _NotLoggedInView extends StatelessWidget {
@@ -597,7 +498,7 @@ class _NotLoggedInView extends StatelessWidget {
 
   Widget _buildSubtitle() {
     return Text(
-      'Sign in to save your favourite tools,\ntrack history, and more.',
+      'Sign in to track your usage history,\nget expert AI advice, and more.',
       textAlign: TextAlign.center,
       style: GoogleFonts.inter(
         fontSize: 13,

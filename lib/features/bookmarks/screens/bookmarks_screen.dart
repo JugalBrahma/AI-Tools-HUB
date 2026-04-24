@@ -1,150 +1,158 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:toolshub/core/models/tool_model.dart';
-import 'package:toolshub/core/providers/tool_provider.dart';
-import 'package:toolshub/core/providers/bookmark_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
+import 'package:toolshub/core/providers/bookmark_provider.dart';
+import 'package:toolshub/core/providers/tool_provider.dart';
+import 'package:toolshub/core/models/tool_model.dart';
 import 'package:toolshub/features/categories/widgets/tool_card.dart';
-import 'package:toolshub/features/home/widgets/footer.dart';
 
-class BookmarksScreen extends StatefulWidget {
-  const BookmarksScreen({super.key});
+class BookmarksScreen extends StatelessWidget {
+  final VoidCallback? onDismiss;
+  const BookmarksScreen({super.key, this.onDismiss});
 
-  @override
-  State<BookmarksScreen> createState() => _BookmarksScreenState();
-}
+  String _getFaviconUrl(String siteUrl) {
+    if (siteUrl.isEmpty) return '';
+    return 'https://t3.gstatic.com/faviconV2'
+        '?client=SOCIAL'
+        '&type=FAVICON'
+        '&fallback_opts=TYPE,SIZE,URL'
+        '&url=${Uri.encodeComponent(siteUrl)}'
+        '&size=128';
+  }
 
-class _BookmarksScreenState extends State<BookmarksScreen> {
-  String _searchQuery = '';
+  Future<void> _confirmDelete(BuildContext context, ToolInfo tool, BookmarkProvider bookmarkProvider, String uid) async {
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0C0C12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.05)),
+        ),
+
+        title: Text(
+          'Remove Bookmark?',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to remove "${tool.name}" from your bookmarks?',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white38)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Remove', style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      if (tool.category == 'AI Recommendation') {
+        await FirebaseFirestore.instance
+            .collection('ai_history')
+            .doc(uid)
+            .collection('bookmarks')
+            .doc(tool.docId)
+            .delete();
+      } else {
+        await bookmarkProvider.toggleBookmark(tool.docId);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<app_auth.AuthProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
-    final horizontalPadding = (screenWidth - 1100).clamp(40.0, screenWidth) / 2;
-
-    if (!auth.isLoggedIn) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 26),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F1118),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF1D2230)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.lock_outline_rounded,
-                color: Color(0xFF7B86A7),
-                size: 28,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Sign in to view your saved tools',
-                style: GoogleFonts.inter(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+    
+    int crossAxisCount = 2;
+    if (screenWidth > 1200) {
+      crossAxisCount = 5;
+    } else if (screenWidth > 900) {
+      crossAxisCount = 4;
+    } else if (screenWidth > 600) {
+      crossAxisCount = 3;
     }
 
-    return SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: const Color(0xFF030303),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            backgroundColor: const Color(0xFF030303),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close_rounded, color: Colors.white),
+              onPressed: onDismiss ?? () => Navigator.pop(context),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: false,
+              titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
+              title: Text(
+                'Bookmarks',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  color: Colors.white,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF00D4AA).withOpacity(0.05),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            sliver: !auth.isLoggedIn 
+                ? SliverToBoxAdapter(child: _buildLoginPrompt())
+                : _buildUnifiedBookmarksGrid(context, auth, crossAxisCount),
+          ),
+          
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginPrompt() {
+    return Container(
+      margin: const EdgeInsets.only(top: 40),
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C0C12),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: Column(
         children: [
-          const SizedBox(height: 60),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00A8FF).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF00A8FF).withOpacity(0.24),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.bookmark_rounded,
-                        color: Color(0xFF00A8FF),
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Text(
-                      'Saved Tools',
-                      style: GoogleFonts.inter(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Your personal shortlist of tools to revisit and compare.',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: const Color(0xFF7F879B),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                // Search Bar
-                TextField(
-                  onChanged: (val) {
-                    setState(() {
-                      _searchQuery = val.toLowerCase();
-                    });
-                  },
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'Search your saved tools...',
-                    hintStyle: GoogleFonts.inter(
-                      color: const Color(0xFF555566),
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: Color(0xFF555566),
-                      size: 20,
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF0F0F12),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 0,
-                      horizontal: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF1E1E28)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF00D4AA)),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 48),
-                _buildSavedToolsGrid(context),
-                const SizedBox(height: 120),
-                const Footer(),
-                const SizedBox(height: 40),
-              ],
+          const Icon(Icons.lock_outline_rounded, color: Colors.white24, size: 48),
+          const SizedBox(height: 20),
+          Text(
+            'Sign in to access your bookmarks',
+            style: GoogleFonts.inter(
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -152,135 +160,95 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     );
   }
 
-  Widget _buildSavedToolsGrid(BuildContext context) {
+  Widget _buildUnifiedBookmarksGrid(BuildContext context, app_auth.AuthProvider auth, int crossAxisCount) {
     final toolProvider = context.watch<ToolProvider>();
     final bookmarkProvider = context.watch<BookmarkProvider>();
 
-    final Map<String, CategoryData> groupedSaves = {};
+    final List<(ToolInfo, Color)> allItems = [];
     for (var cat in toolProvider.categories) {
-      final savedInCat = cat.tools.where((t) {
-        final isSaved = bookmarkProvider.isBookmarked(t.docId);
-        final matchesSearch =
-            t.name.toLowerCase().contains(_searchQuery) ||
-            t.description.toLowerCase().contains(_searchQuery);
-        return isSaved && matchesSearch;
-      }).toList();
-      if (savedInCat.isNotEmpty) {
-        groupedSaves[cat.name] = CategoryData(
-          icon: cat.icon,
-          name: cat.name,
-          themeColor: cat.themeColor,
-          tools: savedInCat,
-        );
+      for (var tool in cat.tools) {
+        if (bookmarkProvider.isBookmarked(tool.docId)) {
+          allItems.add((tool, cat.themeColor));
+        }
       }
     }
 
-    if (groupedSaves.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F0F12),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF1E1E24)),
-        ),
-        alignment: Alignment.center,
-        child: Column(
-          children: [
-            const Icon(
-              Icons.bookmark_border_rounded,
-              size: 48,
-              color: Colors.white24,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _searchQuery.isEmpty
-                  ? 'No saved tools yet'
-                  : 'No matches found in saved tools',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white54,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (_searchQuery.isEmpty)
-              Text(
-                'Explore categories and save your favourites.',
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.white38),
-              ),
-          ],
-        ),
-      );
-    }
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('ai_history')
+          .doc(auth.currentUser!.uid)
+          .collection('bookmarks')
+          .orderBy('pinnedAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final aiDocs = snapshot.data?.docs ?? [];
+        final List<(ToolInfo, Color)> aiItems = aiDocs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final url = data['url'] ?? '';
+          final name = data['toolName'] ?? 'Unknown';
+          final desc = data['why_it_fits'] ?? data['best_for'] ?? '';
+          
+          final tool = ToolInfo(
+            docId: doc.id,
+            name: name,
+            url: url,
+            description: desc,
+            logo: _getFaviconUrl(url),
+            category: 'AI Recommendation',
+            pricing: data['price'] ?? 'FREE / TRIAL',
+            accentColor: const Color(0xFF00D4AA),
+            logoGradient: [const Color(0xFF00D4AA), const Color(0xFF00A8FF)],
+            searchName: name.toLowerCase(),
+            searchDescription: desc.toLowerCase(),
+          );
+          return (tool, const Color(0xFF00D4AA));
+        }).toList();
 
-    return Column(
-      children: groupedSaves.values.map((CategoryData category) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: category.themeColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      category.icon,
-                      color: category.themeColor,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    category.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Divider(color: category.themeColor.withOpacity(0.1)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossAxisCount = constraints.maxWidth > 900
-                      ? 3
-                      : constraints.maxWidth > 500
-                      ? 2
-                      : 1;
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 1.2,
-                    ),
-                    itemCount: category.tools.length,
-                    itemBuilder: (context, index) {
-                      return ToolCard(
-                        tool: category.tools[index],
-                        themeColor: category.themeColor,
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
+        final combinedItems = [...aiItems, ...allItems];
+
+        if (combinedItems.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+          return SliverToBoxAdapter(child: _buildEmptyState());
+        }
+
+        return SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.85,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final entry = combinedItems[index];
+              return ToolCard(
+                tool: entry.$1,
+                themeColor: entry.$2,
+                showBookmark: false,
+                showDelete: true,
+                onDelete: () => _confirmDelete(context, entry.$1, bookmarkProvider, auth.currentUser!.uid),
+              );
+            },
+            childCount: combinedItems.length,
           ),
         );
-      }).toList(),
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(60),
+      child: Column(
+        children: [
+          const Icon(Icons.bookmarks_outlined, color: Colors.white10, size: 48),
+          const SizedBox(height: 20),
+          Text(
+            'Your bookmark list is empty',
+            style: GoogleFonts.inter(color: Colors.white38, fontSize: 15),
+          ),
+        ],
+      ),
     );
   }
 }

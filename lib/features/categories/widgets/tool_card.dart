@@ -11,9 +11,21 @@ import 'package:toolshub/features/subscription/screens/subscription_screen.dart'
 import 'package:toolshub/core/navigation/app_navigator.dart';
 
 class ToolCard extends StatefulWidget {
-  const ToolCard({super.key, required this.tool, required this.themeColor});
+  const ToolCard({
+    super.key,
+    required this.tool,
+    required this.themeColor,
+    this.showBookmark = true,
+    this.showDelete = false,
+    this.onDelete,
+  });
   final ToolInfo tool;
   final Color themeColor;
+  final bool showBookmark;
+  final bool showDelete;
+  final VoidCallback? onDelete;
+
+
 
   @override
   State<ToolCard> createState() => _ToolCardState();
@@ -250,42 +262,67 @@ class _ToolCardState extends State<ToolCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         LogoWidget(tool: tool),
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _toggleBookmark(
-                              bookmarkProvider: bookmarkProvider,
-                              authProvider: authProvider,
-                            ),
-                            borderRadius: BorderRadius.circular(9),
-                            child: Ink(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: isBookmarked
-                                    ? const Color(0xFF00A8FF).withOpacity(0.18)
-                                    : const Color(0xFF13131A),
-                                borderRadius: BorderRadius.circular(9),
-                                border: Border.all(
-                                  color: isBookmarked
-                                      ? const Color(
-                                          0xFF00A8FF,
-                                        ).withOpacity(0.42)
-                                      : const Color(0xFF252533),
-                                ),
+                        if (widget.showBookmark)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _toggleBookmark(
+                                bookmarkProvider: bookmarkProvider,
+                                authProvider: authProvider,
                               ),
-                              child: Icon(
-                                isBookmarked
-                                    ? Icons.bookmark_rounded
-                                    : Icons.bookmark_border_rounded,
-                                size: 16,
-                                color: isBookmarked
-                                    ? const Color(0xFF00A8FF)
-                                    : const Color(0xFF7C7C90),
+                              borderRadius: BorderRadius.circular(9),
+                              child: Ink(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: isBookmarked
+                                      ? const Color(0xFF00A8FF).withOpacity(0.18)
+                                      : const Color(0xFF13131A),
+                                  borderRadius: BorderRadius.circular(9),
+                                  border: Border.all(
+                                    color: isBookmarked
+                                        ? const Color(
+                                            0xFF00A8FF,
+                                          ).withOpacity(0.42)
+                                        : const Color(0xFF252533),
+                                  ),
+                                ),
+                                child: Icon(
+                                  isBookmarked
+                                      ? Icons.bookmark_rounded
+                                      : Icons.bookmark_border_rounded,
+                                  size: 16,
+                                  color: isBookmarked
+                                      ? const Color(0xFF00A8FF)
+                                      : const Color(0xFF7C7C90),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        if (widget.showDelete)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: widget.onDelete,
+                              borderRadius: BorderRadius.circular(9),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(9),
+                                  border: Border.all(
+                                    color: Colors.redAccent.withOpacity(0.2),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 16,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 10),

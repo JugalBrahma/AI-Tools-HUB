@@ -66,7 +66,7 @@ class HeroSection extends StatelessWidget {
                   ? 320
                   : 460,
               child: Text(
-                'Use real listings from your database to compare tools by category, save options, and reduce trial-and-error.',
+                'Explore our live directory of cutting-edge AI tools. Discover trending solutions and chat with our AI Assistant to find exactly what you need.',
                 textAlign: isMobile ? TextAlign.left : TextAlign.center,
                 style: GoogleFonts.ibmPlexMono(
                   fontSize: 11,
@@ -86,14 +86,7 @@ class HeroSection extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF38D56A),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+                  child: const _PulseDot(),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -118,23 +111,23 @@ class HeroSection extends StatelessWidget {
               children: [
                 _StatTile(
                   item: _StatItem(
-                    icon: Icons.grid_view_rounded,
-                    value: '$toolCount',
-                    label: 'TOOLS INDEXED',
+                    icon: Icons.sensors_rounded,
+                    value: 'Live',
+                    label: 'REAL-TIME DATA',
                   ),
                 ),
                 _StatTile(
                   item: _StatItem(
-                    icon: Icons.category_rounded,
-                    value: '$categoryCount',
-                    label: 'ACTIVE CATEGORIES',
+                    icon: Icons.local_fire_department_rounded,
+                    value: '24/7',
+                    label: 'LIVE TRENDING',
                   ),
                 ),
                 _StatTile(
                   item: _StatItem(
-                    icon: Icons.verified_rounded,
-                    value: '$logoCount',
-                    label: 'TOOLS WITH LOGO',
+                    icon: Icons.auto_awesome_rounded,
+                    value: 'Active',
+                    label: 'AI ASSISTANT',
                   ),
                 ),
               ],
@@ -214,6 +207,59 @@ class _StatTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PulseDot extends StatefulWidget {
+  const _PulseDot();
+  @override
+  State<_PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF38D56A).withOpacity(_animation.value),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF38D56A).withOpacity(0.5 * _animation.value),
+                blurRadius: 8,
+                spreadRadius: 2 * _animation.value,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
