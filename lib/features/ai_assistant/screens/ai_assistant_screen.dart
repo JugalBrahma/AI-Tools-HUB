@@ -43,29 +43,42 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     try {
       final auth = context.read<app_auth.AuthProvider>();
 
-      // ── Check Usage Limit for Free Users ────────────────────────────
-      if (!auth.isPro) {
-        final user = auth.currentUser;
-        if (user == null) {
-          _showError('Please sign in to use the AI Assistant.');
-          return;
-        }
+      // ── Check Usage Limit ──────────────────────────────────────────
+      final user = auth.currentUser;
+      if (user == null) {
+        _showError('Please sign in to use the AI Assistant.');
+        return;
+      }
 
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        final lastUsage = doc.data()?['last_ai_usage'] as Timestamp?;
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      
+      final userData = doc.data();
+      final lastUsage = userData?['last_ai_usage'] as Timestamp?;
+      final usageCount = userData?['ai_usage_count'] as int? ?? 0;
 
         if (lastUsage != null) {
           final lastDate = lastUsage.toDate();
           final now = DateTime.now();
-          if (lastDate.year == now.year && lastDate.month == now.month) {
-            _showLimitReachedError();
-            return;
+          
+          if (auth.isPro || auth.status == 'trial') {
+            final isSameDay = lastDate.year == now.year && 
+                             lastDate.month == now.month && 
+                             lastDate.day == now.day;
+            if (isSameDay && usageCount >= 7) {
+              _showLimitReachedError(isPro: true);
+              return;
+            }
+          } else {
+            final isSameMonth = lastDate.year == now.year && lastDate.month == now.month;
+            if (isSameMonth && usageCount >= 2) {
+              _showLimitReachedError(isPro: false);
+              return;
+            }
           }
         }
-      }
 
       // ── Map UI to API Request ─────────────────────────────────────
       final request = AssistantRequest(
@@ -102,16 +115,34 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         }
       }
 
-      // ── Update usage timestamp for free users ──
-      // NOTE: Update logic disabled per directive to only create new user docs, not update existing ones.
-      /*
-      if (!auth.isPro && auth.currentUser != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(auth.currentUser!.uid)
-            .update({'last_ai_usage': FieldValue.serverTimestamp()});
+      if (auth.currentUser != null) {
+        final userRef = FirebaseFirestore.instance.collection('users').doc(auth.currentUser!.uid);
+        final doc = await userRef.get();
+        final userData = doc.data();
+        final lastUsage = userData?['last_ai_usage'] as Timestamp?;
+        final currentCount = userData?['ai_usage_count'] as int? ?? 0;
+        
+        int newCount = 1;
+        if (lastUsage != null) {
+          final lastDate = lastUsage.toDate();
+          final now = DateTime.now();
+          
+          if (auth.isPro || auth.status == 'trial') {
+            final isSameDay = lastDate.year == now.year && 
+                             lastDate.month == now.month && 
+                             lastDate.day == now.day;
+            if (isSameDay) newCount = currentCount + 1;
+          } else {
+            final isSameMonth = lastDate.year == now.year && lastDate.month == now.month;
+            if (isSameMonth) newCount = currentCount + 1;
+          }
+        }
+
+        await userRef.update({
+          'last_ai_usage': FieldValue.serverTimestamp(),
+          'ai_usage_count': newCount,
+        });
       }
-      */
 
       if (mounted) {
         _showResults(response);
@@ -138,22 +169,26 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     );
   }
 
-  void _showLimitReachedError() {
+  void _showLimitReachedError({bool isPro = false}) {
+    final message = isPro 
+        ? 'Daily limit reached: 7 uses per day. Try again tomorrow!'
+        : 'Free plan limit: 2 uses per month reached. Upgrade for unlimited AI!';
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.lock_clock_rounded, color: Color(0xFFFFD700), size: 18),
-            SizedBox(width: 12),
+            const Icon(Icons.lock_clock_rounded, color: Color(0xFFFFD700), size: 18),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Free plan limit: 1 use per month reached. Upgrade for unlimited AI!',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
         ),
-        action: SnackBarAction(
+        action: isPro ? null : SnackBarAction(
           label: 'UPGRADE',
           textColor: const Color(0xFFFFD700),
           onPressed: () => AppNavigator.toSubscription(context),
@@ -415,11 +450,76 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       // ── Submit Button ─────────────────────────────────
                       ScrollReveal(
                         delay: 0.2,
-                        child: _PremiumCTA(
-                          onPressed: _isLoading ? null : _generateStack,
-                          isLoading: _isLoading,
-                          isLocked: !auth.isLoggedIn,
-                          onLockedTap: _showSignInToast,
+                        child: Column(
+                          children: [
+                            _PremiumCTA(
+                              onPressed: _isLoading ? null : _generateStack,
+                              isLoading: _isLoading,
+                              isLocked: !auth.isLoggedIn,
+                              onLockedTap: _showSignInToast,
+                            ),
+                            if (auth.isLoggedIn && auth.currentUser != null) ...[
+                              const SizedBox(height: 12),
+                              StreamBuilder<DocumentSnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(auth.currentUser!.uid)
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData || !snapshot.data!.exists) {
+                                    return Text(
+                                      (auth.isPro || auth.status == 'trial')
+                                        ? '7 / 7 uses left today' 
+                                        : '2 / 2 uses left this month',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: Colors.white24,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    );
+                                  }
+                                  
+                                  final data = snapshot.data!.data() as Map<String, dynamic>?;
+                                  final lastUsage = data?['last_ai_usage'] as Timestamp?;
+                                  final count = data?['ai_usage_count'] as int? ?? 0;
+                                  
+                                  int remaining = 0;
+                                  int total = 0;
+                                  String period = '';
+                                  
+                                  if (auth.isPro || auth.status == 'trial') {
+                                    total = 7;
+                                    period = 'today';
+                                    final lastDate = lastUsage?.toDate();
+                                    final now = DateTime.now();
+                                    final isSameDay = lastDate != null && 
+                                                     lastDate.year == now.year && 
+                                                     lastDate.month == now.month && 
+                                                     lastDate.day == now.day;
+                                    remaining = isSameDay ? (total - count).clamp(0, total) : total;
+                                  } else {
+                                    total = 2;
+                                    period = 'this month';
+                                    final lastDate = lastUsage?.toDate();
+                                    final now = DateTime.now();
+                                    final isSameMonth = lastDate != null && 
+                                                       lastDate.year == now.year && 
+                                                       lastDate.month == now.month;
+                                    remaining = isSameMonth ? (total - count).clamp(0, total) : total;
+                                  }
+                                  
+                                  return Text(
+                                    '$remaining / $total uses left $period',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: remaining == 0 ? Colors.redAccent.withOpacity(0.6) : Colors.white24,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
@@ -721,6 +821,35 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                           );
                         }
                       },
+                      onDelete: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: const Color(0xFF141418),
+                            title: Text('Delete History?', style: GoogleFonts.inter(color: Colors.white)),
+                            content: Text('This will permanently remove this recommendation from your history.', style: GoogleFonts.inter(color: Colors.white70)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text('CANCEL', style: GoogleFonts.ibmPlexMono(color: Colors.white38)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: Text('DELETE', style: GoogleFonts.ibmPlexMono(color: Colors.redAccent)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await FirebaseFirestore.instance
+                              .collection('ai_history')
+                              .doc(auth.currentUser!.uid)
+                              .collection('history')
+                              .doc(docs[index].id)
+                              .delete();
+                        }
+                      },
                     );
                   },
                 );
@@ -739,11 +868,13 @@ class _HistoryItem extends StatefulWidget {
   final String prompt;
   final String topPick;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const _HistoryItem({
     required this.prompt,
     required this.topPick,
     required this.onTap,
+    required this.onDelete,
   });
 
   @override
@@ -766,7 +897,9 @@ class _HistoryItemState extends State<_HistoryItem> {
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: _isHovered ? const Color(0xFF1C1C22) : const Color(0xFF141418),
+            color: _isHovered
+                ? const Color(0xFF1C1C22)
+                : const Color(0xFF141418),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _isHovered
@@ -783,27 +916,39 @@ class _HistoryItemState extends State<_HistoryItem> {
                   ]
                 : [],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                widget.prompt,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.prompt,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Result: ${widget.topPick}',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF00D4AA),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Result: ${widget.topPick}',
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF00D4AA),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                color: Colors.white24,
+                hoverColor: Colors.redAccent.withOpacity(0.1),
+                onPressed: widget.onDelete,
               ),
             ],
           ),
@@ -822,9 +967,9 @@ class _ResultsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.6,
-      maxChildSize: 0.95,
+      initialChildSize: 0.95,
+      minChildSize: 0.5,
+      maxChildSize: 0.98,
       expand: false,
       builder: (context, scrollController) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -1067,28 +1212,30 @@ class _RecommendationCard extends StatelessWidget {
         ? const Color(0xFF00D4AA)
         : const Color(0xFF4A89FF);
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: const Color(0xFF0C0C10),
-        borderRadius: BorderRadius.circular(28),
+        color: const Color(0xFF0C0C12),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: isTop
-              ? primaryColor.withOpacity(0.3)
-              : const Color(0xFF1C1C22),
-          width: 1.5,
+          color: primaryColor.withOpacity(isTop ? 0.4 : 0.25),
+          width: isTop ? 2 : 1.5,
         ),
-        boxShadow: isTop
-            ? [
-                BoxShadow(
-                  color: primaryColor.withOpacity(0.05),
-                  blurRadius: 40,
-                  offset: const Offset(0, 10),
-                ),
-              ]
-            : [],
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(isTop ? 0.1 : 0.05),
+            blurRadius: isTop ? 40 : 30,
+            spreadRadius: isTop ? -10 : -15,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1108,14 +1255,32 @@ class _RecommendationCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          rec.toolName,
-                          style: GoogleFonts.inter(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              rec.toolName,
+                              style: GoogleFonts.inter(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            if (rec.oneThingItDoesBest.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  rec.oneThingItDoesBest.toUpperCase(),
+                                  style: GoogleFonts.ibmPlexMono(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: primaryColor,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       _BookmarkToolButton(rec: rec),
@@ -1125,27 +1290,30 @@ class _RecommendationCard extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: _launchToolUrl,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.link, size: 14, color: Colors.white24),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            rec.url
-                                .replaceFirst('https://', '')
-                                .replaceFirst('www.', ''),
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: primaryColor.withOpacity(0.8),
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _buildQuickVibeChip(
+                        Icons.bolt_rounded,
+                        rec.effortToValue,
+                        const Color(0xFFFFB800),
+                      ),
+                      if (rec.soloOnly)
+                        _buildQuickVibeChip(
+                          Icons.person_rounded,
+                          'SOLO FOCUS',
+                          const Color(0xFF4A89FF),
                         ),
-                      ],
-                    ),
+                      if (rec.prioritySatisfied)
+                        _buildQuickVibeChip(
+                          Icons.verified_rounded,
+                          'PRIORITY MET',
+                          const Color(0xFF00D4AA),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -1157,53 +1325,173 @@ class _RecommendationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPriceSection(),
-                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(child: _buildPriceSection()),
+                      if (rec.budgetWarning)
+                        _buildQuickVibeChip(
+                          Icons.warning_amber_rounded,
+                          'BUDGET ALERT',
+                          const Color(0xFFFF4B4B),
+                        ),
+                    ],
+                  ),
+                  if (rec.freeTierReality.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10, left: 44),
+                      child: Text(
+                        rec.freeTierReality,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.white38,
+                          fontStyle: FontStyle.italic,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 32),
 
-                  _buildSectionTitle('WHY IT FITS'),
-                  const SizedBox(height: 8),
+                  if (rec.featureMatch != null) ...[
+                    _buildFeatureMatchSection(rec.featureMatch!),
+                    const SizedBox(height: 32),
+                  ],
+
+                  if (rec.referenceToolComparison.isNotEmpty) ...[
+                    _buildReferenceComparison(rec.referenceToolComparison),
+                    const SizedBox(height: 32),
+                  ],
+
+                  _buildSectionTitle('THE VERDICT'),
+                  const SizedBox(height: 12),
                   Text(
                     rec.whyItFits,
                     style: GoogleFonts.inter(
-                      fontSize: 15,
-                      color: Colors.white70,
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
                       height: 1.6,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
+                  if (rec.perfectFor.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: _buildHighlightBox(
+                        'BEST CASE SCENARIO',
+                        rec.perfectFor,
+                        primaryColor,
+                      ),
                     ),
-                    child: Text(
-                      rec.fitScoreReason,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: primaryColor,
-                        fontWeight: FontWeight.w500,
-                        fontStyle: FontStyle.italic,
+
+                  const SizedBox(height: 32),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _buildVerticalInfo(
+                          'SUPERPOWER',
+                          rec.oneThingItDoesBest,
+                          Icons.auto_awesome_rounded,
+                          const Color(0xFF00D4AA),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _buildVerticalInfo(
+                          'THE GOTCHA',
+                          rec.oneThingThatWillFrustrateYou,
+                          Icons.sentiment_dissatisfied_rounded,
+                          const Color(0xFFFFB800),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+                  const Divider(color: Color(0xFF1C1C22), height: 1),
+                  const SizedBox(height: 32),
+
+                  _buildSectionTitle('QUICK START'),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: _launchToolUrl,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryColor.withOpacity(0.08),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: primaryColor.withOpacity(0.15),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.rocket_launch_rounded,
+                              color: primaryColor,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'FIRST THING TO TRY',
+                                      style: GoogleFonts.ibmPlexMono(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w900,
+                                        color: primaryColor,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Icons.open_in_new_rounded,
+                                      size: 10,
+                                      color: primaryColor.withOpacity(0.4),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  rec.firstThingToTry,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 18,
+                            color: primaryColor.withOpacity(0.5),
+                          ),
+                        ],
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('FOR THE BEST EXPERIENCE'),
-                  const SizedBox(height: 8),
-                  Text(
-                    rec.bestFor,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.white54,
-                      height: 1.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  const Divider(color: Color(0xFF1C1C22)),
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: 32),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1211,15 +1499,15 @@ class _RecommendationCard extends StatelessWidget {
                         child: _buildWarningSection(
                           'TRADEOFFS',
                           rec.tradeoffs,
-                          Icons.compare_arrows,
+                          Icons.compare_arrows_rounded,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 20),
                       Expanded(
                         child: _buildWarningSection(
-                          'CAUTION',
-                          rec.caution,
-                          Icons.warning_amber_rounded,
+                          'SKIP IF...',
+                          rec.skipIf,
+                          Icons.block_flipped,
                           isUrgent: true,
                         ),
                       ),
@@ -1231,33 +1519,64 @@ class _RecommendationCard extends StatelessWidget {
 
             // ── Footer Section ──────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              color: const Color(0xFF14141C),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.2),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(32),
+                ),
+              ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.update,
+                    Icons.verified_user_rounded,
                     size: 14,
                     color: _getFreshnessColor(rec.freshnessStatus),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'STATUS: ${rec.freshnessStatus.toUpperCase()}',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: _getFreshnessColor(rec.freshnessStatus),
-                      letterSpacing: 0.5,
+                  Flexible(
+                    child: Text(
+                      'STATUS: ${rec.freshnessStatus.toUpperCase()}',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.ibmPlexMono(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: _getFreshnessColor(rec.freshnessStatus),
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const Spacer(),
                   Tooltip(
                     message: rec.evidenceSummary,
                     triggerMode: TooltipTriggerMode.tap,
-                    child: const Icon(
-                      Icons.help_outline,
-                      size: 16,
-                      color: Colors.white24,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white10),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'WHY THIS?',
+                            style: GoogleFonts.ibmPlexMono(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white24,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.help_outline_rounded,
+                            size: 12,
+                            color: Colors.white24,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -1390,6 +1709,209 @@ class _RecommendationCard extends StatelessWidget {
       default:
         return Colors.white24;
     }
+  }
+
+  Widget _buildQuickVibeChip(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text.toUpperCase(),
+            style: GoogleFonts.ibmPlexMono(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHighlightBox(String title, String content, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.ibmPlexMono(
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              color: color,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            content,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerticalInfo(
+    String title,
+    String content,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: GoogleFonts.ibmPlexMono(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          content,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: Colors.white70,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureMatchSection(FeatureMatch match) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('FEATURE MATCH'),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ...match.matched.map(
+              (f) => _buildMiniTag(f, const Color(0xFF00D4AA), Icons.check),
+            ),
+            ...match.missing.map(
+              (f) => _buildMiniTag(
+                f,
+                const Color(0xFFFF4B4B),
+                Icons.close,
+                isMissing: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniTag(
+    String text,
+    Color color,
+    IconData icon, {
+    bool isMissing = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: isMissing ? Colors.white38 : Colors.white70,
+              decoration: isMissing ? TextDecoration.lineThrough : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReferenceComparison(String content) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF4A89FF).withOpacity(0.1),
+            const Color(0xFF00D4AA).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF4A89FF).withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.compare_rounded,
+                color: Color(0xFF4A89FF),
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'VS. YOUR CURRENT TOOL',
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF4A89FF),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            content,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.white,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1758,6 +2280,7 @@ class _PremiumCTAState extends State<_PremiumCTA> {
     );
   }
 }
+
 class _BookmarkToolButton extends StatefulWidget {
   final Recommendation rec;
   const _BookmarkToolButton({required this.rec});
@@ -1828,9 +2351,9 @@ class _BookmarkToolButtonState extends State<_BookmarkToolButton> {
         setState(() => _isSaved = true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to bookmark: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to bookmark: $e')));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -1864,7 +2387,9 @@ class _BookmarkToolButtonState extends State<_BookmarkToolButton> {
                 ),
               )
             : Icon(
-                _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                _isSaved
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
                 size: 18,
                 color: _isSaved ? const Color(0xFF00D4AA) : Colors.white24,
               ),

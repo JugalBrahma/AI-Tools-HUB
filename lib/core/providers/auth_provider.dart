@@ -182,6 +182,7 @@ class AuthProvider with ChangeNotifier {
           'payment_id': null,
           'amount': 0.0,
           'last_ai_usage': null,
+          'ai_usage_count': 0,
           'created_at': FieldValue.serverTimestamp(),
           'last_login': FieldValue.serverTimestamp(),
           'updated_at': FieldValue.serverTimestamp(),

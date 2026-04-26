@@ -37,7 +37,6 @@ class AssistantRequest {
   };
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Response Model
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,9 +57,8 @@ class AssistantResponse {
   });
 
   factory AssistantResponse.fromJson(dynamic json) {
-    // n8n often returns a list [ { "output": { ... } } ]
     Map<String, dynamic> data;
-    
+
     if (json is List) {
       if (json.isEmpty) throw Exception('Empty response from AI assistant');
       final firstItem = json.first as Map<String, dynamic>;
@@ -70,10 +68,12 @@ class AssistantResponse {
     } else {
       throw Exception('Unexpected response format');
     }
-    
+
     return AssistantResponse(
       success: data['success'] ?? true,
-      topPick: data['top_pick'] != null ? Recommendation.fromJson(data['top_pick']) : null,
+      topPick: data['top_pick'] != null
+          ? Recommendation.fromJson(data['top_pick'], isTopPick: true)
+          : null,
       alternatives: (data['alternatives'] as List? ?? [])
           .map((i) => Recommendation.fromJson(i))
           .toList(),
@@ -91,6 +91,22 @@ class AssistantResponse {
   };
 }
 
+class FeatureMatch {
+  final List<String> matched;
+  final List<String> missing;
+
+  FeatureMatch({this.matched = const [], this.missing = const []});
+
+  factory FeatureMatch.fromJson(Map<String, dynamic> json) {
+    return FeatureMatch(
+      matched: List<String>.from(json['matched'] ?? []),
+      missing: List<String>.from(json['missing'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'matched': matched, 'missing': missing};
+}
+
 class Recommendation {
   final String toolName;
   final String url;
@@ -103,6 +119,20 @@ class Recommendation {
   final String evidenceSummary;
   final String caution;
 
+  // — new fields —
+  final String freeTierReality;
+  final bool budgetWarning;
+  final bool soloOnly;
+  final String perfectFor;
+  final String skipIf;
+  final String effortToValue;
+  final String oneThingItDoesBest;
+  final String oneThingThatWillFrustrateYou;
+  final String firstThingToTry;
+  final FeatureMatch? featureMatch; // top_pick only
+  final bool prioritySatisfied; // top_pick only
+  final String referenceToolComparison; // top_pick only
+
   Recommendation({
     required this.toolName,
     required this.url,
@@ -114,11 +144,26 @@ class Recommendation {
     required this.freshnessStatus,
     required this.evidenceSummary,
     required this.caution,
+    this.freeTierReality = '',
+    this.budgetWarning = false,
+    this.soloOnly = false,
+    this.perfectFor = '',
+    this.skipIf = '',
+    this.effortToValue = '',
+    this.oneThingItDoesBest = '',
+    this.oneThingThatWillFrustrateYou = '',
+    this.firstThingToTry = '',
+    this.featureMatch,
+    this.prioritySatisfied = true,
+    this.referenceToolComparison = '',
   });
 
-  factory Recommendation.fromJson(Map<String, dynamic> json) {
+  factory Recommendation.fromJson(
+    Map<String, dynamic> json, {
+    bool isTopPick = false,
+  }) {
     return Recommendation(
-      toolName: json['toolName'] ?? json['tool_name'] ?? 'Unknown Tool',
+      toolName: json['tool_name'] ?? json['toolName'] ?? 'Unknown Tool',
       url: json['url'] ?? '',
       price: json['price'] ?? 'Price not specified',
       fitScoreReason: json['fit_score_reason'] ?? '',
@@ -128,11 +173,28 @@ class Recommendation {
       freshnessStatus: json['freshness_status'] ?? 'unknown',
       evidenceSummary: json['evidence_summary'] ?? '',
       caution: json['caution'] ?? '',
+      // new fields
+      freeTierReality: json['free_tier_reality'] ?? '',
+      budgetWarning: json['budget_warning'] ?? false,
+      soloOnly: json['solo_only'] ?? false,
+      perfectFor: json['perfect_for'] ?? '',
+      skipIf: json['skip_if'] ?? '',
+      effortToValue: json['effort_to_value'] ?? '',
+      oneThingItDoesBest: json['one_thing_it_does_best'] ?? '',
+      oneThingThatWillFrustrateYou:
+          json['one_thing_that_will_frustrate_you'] ?? '',
+      firstThingToTry: json['first_thing_to_try'] ?? '',
+      // top_pick only fields — safe to parse for alternatives too, just null
+      featureMatch: json['feature_match'] != null
+          ? FeatureMatch.fromJson(json['feature_match'])
+          : null,
+      prioritySatisfied: json['priority_satisfied'] ?? true,
+      referenceToolComparison: json['reference_tool_comparison'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'toolName': toolName,
+    'tool_name': toolName,
     'url': url,
     'price': price,
     'fit_score_reason': fitScoreReason,
@@ -142,5 +204,17 @@ class Recommendation {
     'freshness_status': freshnessStatus,
     'evidence_summary': evidenceSummary,
     'caution': caution,
+    'free_tier_reality': freeTierReality,
+    'budget_warning': budgetWarning,
+    'solo_only': soloOnly,
+    'perfect_for': perfectFor,
+    'skip_if': skipIf,
+    'effort_to_value': effortToValue,
+    'one_thing_it_does_best': oneThingItDoesBest,
+    'one_thing_that_will_frustrate_you': oneThingThatWillFrustrateYou,
+    'first_thing_to_try': firstThingToTry,
+    'feature_match': featureMatch?.toJson(),
+    'priority_satisfied': prioritySatisfied,
+    'reference_tool_comparison': referenceToolComparison,
   };
 }
