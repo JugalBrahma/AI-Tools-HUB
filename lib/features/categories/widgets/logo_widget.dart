@@ -96,11 +96,32 @@ class _LogoWidgetState extends State<LogoWidget> {
       return 'lib/core/assets/scroll_logo/$foundAsset';
     }
 
-    // Default slugification: lowercase, no spaces, add .png
+    // 3. Fallback: Check if we have a direct slug match in the available assets
+    const availableAssets = {
+      'airtable.png', 'bolt.png', 'canva.jpeg', 'chatgpt.png', 'claude.png',
+      'cursor.png', 'deepseek.png', 'descript.png', 'elevenlabs.png',
+      'fireflies.png', 'framer.jpeg', 'gamma.jpg', 'gemini.png', 'grammerly.png',
+      'higgingface.png', 'jasper.png', 'leonardo.png', 'logRocket.png',
+      'lovable.png', 'make.jpg', 'midjourney.png', 'mistral.png', 'n8n.png',
+      'notion.png', 'openrouter.png', 'otter.png', 'perplexity.png', 'pika.png',
+      'quillbot.png', 'replit.png', 'runwayml.png', 'stability.png', 'suno.png',
+      'synthesia.png', 'typefully.png', 'v0.png', 'veo.png', 'writesonic.png',
+      'x.png', 'zapier.png'
+    };
+
     final slug = name.replaceAll(' ', '');
     if (slug.isNotEmpty) {
-      // We return the path and let the Image.asset errorBuilder handle if it's actually missing
-      return 'lib/core/assets/scroll_logo/$slug.png';
+      final pngName = '$slug.png';
+      final jpegName = '$slug.jpeg';
+      final jpgName = '$slug.jpg';
+
+      if (availableAssets.contains(pngName)) {
+        return 'lib/core/assets/scroll_logo/$pngName';
+      } else if (availableAssets.contains(jpegName)) {
+        return 'lib/core/assets/scroll_logo/$jpegName';
+      } else if (availableAssets.contains(jpgName)) {
+        return 'lib/core/assets/scroll_logo/$jpgName';
+      }
     }
 
     return null;

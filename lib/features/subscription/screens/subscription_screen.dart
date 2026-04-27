@@ -152,7 +152,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 child: _pricingCard('Free', '0', [
                   'Basic Search',
                   '10 Bookmarks',
-                  'Community Support',
+                  '2 AI generations / month',
                 ]),
               ),
               const SizedBox(width: 24),
@@ -160,7 +160,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 child: _pricingCard(
                   'Trial',
                   trialPlan.displayPrice.replaceAll(trialPlan.symbol, ''),
-                  ['Full AI Access', 'Try Pro Features', '4 Days Duration'],
+                  ['7 AI generations / day', 'Full Bookmarks', '4 Days Duration'],
                   plan: trialPlan,
                   suffix: '/4 days',
                   subLabel: 'One-time payment',
@@ -174,7 +174,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   'Pro',
                   proPlan.displayPrice.replaceAll(proPlan.symbol, ''),
                   [
-                    'AI Assistant V2',
+                    '7 AI generations / day',
                     'Unlimited Bookmarks',
                     'Daily Briefings',
                     'Priority Support',
@@ -190,13 +190,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               _pricingCard('Free', '0', [
                 'Basic Search',
                 '10 Bookmarks',
-                'Community Support',
+                '2 AI generations / month',
               ]),
               const SizedBox(height: 24),
               _pricingCard(
                 'Trial',
                 trialPlan.displayPrice.replaceAll(trialPlan.symbol, ''),
-                ['Full AI Access', 'Try Pro Features', '4 Days Duration'],
+                ['7 AI generations / day', 'Full Bookmarks', '4 Days Duration'],
                 plan: trialPlan,
                 suffix: '/4 days',
                 subLabel: 'One-time payment',
@@ -208,7 +208,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 'Pro',
                 proPlan.displayPrice.replaceAll(proPlan.symbol, ''),
                 [
-                  'AI Assistant V2',
+                  '7 AI generations / day',
                   'Unlimited Bookmarks',
                   'Daily Briefings',
                   'Priority Support',
@@ -634,6 +634,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             _badge(Icons.verified_user, 'PCI Compliant'),
             _badge(Icons.autorenew, 'Cancel Anytime'),
           ],
+        ),
+        const SizedBox(height: 32),
+        Text(
+          '* All purchases are final. Strict no-refund policy applies.',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            color: Colors.white24,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
         ),
       ],
     );

@@ -105,7 +105,7 @@ class _StepItem extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // Connecting line for desktop
-          if (width > 200 && index < 4)
+          if (width.isFinite && width > 200 && index < 4)
             Positioned(
               top: 30,
               left: width * 0.5 + 40,

@@ -113,93 +113,123 @@ class _TrendingScreenState extends State<TrendingScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.transparent,
-      drawer: isMobile
-          ? Drawer(
-              backgroundColor: const Color(0xFF0D0E14),
-              width: 280,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 48,
-                  horizontal: 16,
-                ),
-                child: _CategorySidebar(onClose: () => Navigator.pop(context)),
-              ),
-            )
-          : null,
-      body: AnimatedGridBackground(
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(
-            scrollbars: false,
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.trackpad,
-            },
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF08080A),
+        width: 300,
+        child: Container(
+          decoration: const BoxDecoration(
+            border: Border(right: BorderSide(color: Color(0xFF15151A), width: 1)),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left Sidebar (Hidden on mobile)
-              if (!isMobile) ...[
-                const SizedBox(
-                  width: 280,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-                    child: _CategorySidebar(),
-                  ),
-                ),
-                // Subtle Vertical Divider
-                Container(width: 1, color: Colors.white.withOpacity(0.05)),
-              ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
+            child: _CategorySidebar(onClose: () => Navigator.pop(context)),
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          AnimatedGridBackground(
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                scrollbars: false,
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left Sidebar (Hidden on mobile)
+                  if (!isMobile) ...[
+                    const SizedBox(
+                      width: 280,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+                        child: _CategorySidebar(),
+                      ),
+                    ),
+                    // Subtle Vertical Divider
+                    Container(width: 1, color: Colors.white.withOpacity(0.05)),
+                  ],
 
-              // Content Area
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1100),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 48,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ScrollReveal(
-                              child: _TrendingHeader(
-                                onMenuPressed: isMobile
-                                    ? () => _scaffoldKey.currentState
-                                          ?.openDrawer()
-                                    : null,
-                              ),
+                  // Content Area
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1100),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                              vertical: 48,
                             ),
-                            const SizedBox(height: 40),
-                            ScrollReveal(
-                              delay: 0.1,
-                              child: tp.isLoading
-                                  ? const _LoadingState()
-                                  : _BentoGrid(tp: tp),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (isMobile) const SizedBox(height: 40),
+                                ScrollReveal(
+                                  child: const _TrendingHeader(),
+                                ),
+                                const SizedBox(height: 40),
+                                ScrollReveal(
+                                  delay: 0.1,
+                                  child: tp.isLoading
+                                      ? const _LoadingState()
+                                      : _BentoGrid(tp: tp),
+                                ),
+                                const SizedBox(height: 80),
+                              ],
                             ),
-                            const SizedBox(height: 80),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Left Side Drawer Toggle (Mobile Only) ───────────────────────
+          if (isMobile)
+            Positioned(
+              left: 24,
+              top: 24,
+              child: Builder(
+                builder: (context) => Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF141418),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF24242A)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.dashboard_customize_rounded,
+                      color: Color(0xFF00FFD1),
+                    ),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    tooltip: 'Trending Categories',
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
 }
 
 class _TrendingHeader extends StatelessWidget {
-  final VoidCallback? onMenuPressed;
-  const _TrendingHeader({this.onMenuPressed});
+  const _TrendingHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -240,12 +270,6 @@ class _TrendingHeader extends StatelessWidget {
                 ],
               ),
             ),
-            if (onMenuPressed != null)
-              IconButton(
-                onPressed: onMenuPressed,
-                icon: const Icon(Icons.menu_rounded, color: Colors.white70),
-                tooltip: 'Open Categories',
-              ),
           ],
         ),
         const SizedBox(height: 20),
@@ -1103,19 +1127,33 @@ class _CategorySidebar extends StatelessWidget {
     ];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (onClose != null) ...[
-          Row(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Spacer(),
-              IconButton(
-                onPressed: onClose,
-                icon: const Icon(Icons.close_rounded, color: Colors.white38),
+              Text(
+                'Categories',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
               ),
+              if (onClose != null)
+                IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close_rounded, color: Colors.white38),
+                ),
             ],
           ),
-          const SizedBox(height: 12),
-        ],
+        ),
+        const SizedBox(height: 8),
+        const Divider(color: Color(0xFF15151A)),
+        const SizedBox(height: 16),
+
         ...categories.map(
           (cat) => _SidebarItem(title: cat.$1, icon: cat.$2, isActive: cat.$3, isComingSoon: cat.$4),
         ),

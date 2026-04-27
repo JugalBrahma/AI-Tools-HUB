@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:toolshub/core/utils/html_stub.dart'
     if (dart.library.html) 'dart:html'
@@ -271,6 +272,8 @@ class _AppShellState extends State<AppShell> {
                       ? _buildStatusBadge(auth)
                       : null,
                 ),
+                if (auth.isLoggedIn && auth.expiryDate != null)
+                  _MembershipExpiryInfo(auth: auth),
 
                 /*
                 _buildDrawerLink(
@@ -313,7 +316,7 @@ class _AppShellState extends State<AppShell> {
         : name[0].toUpperCase();
 
     return GestureDetector(
-      onTap: () => AppNavigator.toProfile(context, closeDrawer: true),
+      onTap: null,
       child: Row(
       children: [
         Stack(
@@ -716,6 +719,92 @@ class _AppShellState extends State<AppShell> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MembershipExpiryInfo extends StatefulWidget {
+  final app_auth.AuthProvider auth;
+  const _MembershipExpiryInfo({required this.auth});
+
+  @override
+  State<_MembershipExpiryInfo> createState() => _MembershipExpiryInfoState();
+}
+
+class _MembershipExpiryInfoState extends State<_MembershipExpiryInfo> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.auth.expiryDate == null) return const SizedBox.shrink();
+
+    final remaining = widget.auth.expiryDate!.difference(DateTime.now());
+    if (remaining.isNegative) return const SizedBox.shrink();
+
+    final days = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
+
+    final timeStr = days > 0
+        ? '${days}d ${hours}h ${minutes}m ${seconds}s'
+        : '${hours}h ${minutes}m ${seconds}s';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF00D4AA).withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF00D4AA).withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF00D4AA)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PRO PLAN EXPIRES IN',
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white24,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    timeStr,
+                    style: GoogleFonts.ibmPlexMono(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF00D4AA),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
