@@ -36,7 +36,7 @@ class TopNavBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'TOOLSHUB',
+                    'AI TOOLS HUB',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 class CtaSection extends StatelessWidget {
   const CtaSection({super.key});
@@ -37,18 +38,18 @@ class CtaSection extends StatelessWidget {
                       _buildHeader(isCompact: true),
                       const SizedBox(height: 26),
                        const _BenefitTile(
-                        icon: Icons.trending_up_rounded,
-                        title: 'Discover trending AI models',
+                        icon: Icons.smart_toy_rounded,
+                        title: 'AI-powered recommendations',
                       ),
                       const SizedBox(height: 12),
                       const _BenefitTile(
-                        icon: Icons.auto_awesome_rounded,
-                        title: 'Leverage AI-driven insights',
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'Describe your workflow needs',
                       ),
                       const SizedBox(height: 12),
                       const _BenefitTile(
-                        icon: Icons.speed_rounded,
-                        title: 'Decide faster with zero guesswork',
+                        icon: Icons.psychology_rounded,
+                        title: 'Get personalized suggestions',
                       ),
                       const SizedBox(height: 26),
                       const _CtaButton(),
@@ -67,18 +68,18 @@ class CtaSection extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const _BenefitTile(
-                              icon: Icons.trending_up_rounded,
-                              title: 'Discover trending AI models',
+                              icon: Icons.smart_toy_rounded,
+                              title: 'AI-powered recommendations',
                             ),
                             const SizedBox(height: 12),
                             const _BenefitTile(
-                              icon: Icons.auto_awesome_rounded,
-                              title: 'Leverage AI-driven insights',
+                              icon: Icons.chat_bubble_outline_rounded,
+                              title: 'Describe your workflow needs',
                             ),
                             const SizedBox(height: 12),
                             const _BenefitTile(
-                              icon: Icons.speed_rounded,
-                              title: 'Decide faster with zero guesswork',
+                              icon: Icons.psychology_rounded,
+                              title: 'Get personalized suggestions',
                             ),
                             const SizedBox(height: 28),
                             const _CtaButton(),
@@ -109,7 +110,7 @@ class CtaSection extends StatelessWidget {
             ),
           ),
           child: Text(
-            'NEXT STEP',
+            'GET STARTED',
             style: GoogleFonts.ibmPlexMono(
               fontSize: 9,
               fontWeight: FontWeight.w700,
@@ -120,7 +121,7 @@ class CtaSection extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'Build Your AI Stack\nWith More Confidence',
+          'Get Personalized AI Tool\nRecommendations',
           style: GoogleFonts.inter(
             fontSize: isCompact ? 30 : 44,
             fontWeight: FontWeight.w900,
@@ -131,7 +132,7 @@ class CtaSection extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(
-          'Use the catalog to narrow options, then test only the tools that match your workflow and budget.',
+          'Let our AI assistant help you find the perfect tools for your specific needs. Describe your workflow and get tailored recommendations.',
           style: GoogleFonts.inter(
             fontSize: isCompact ? 14 : 16,
             height: 1.55,
@@ -145,7 +146,7 @@ class CtaSection extends StatelessWidget {
   Widget _buildMeta() {
     return Center(
       child: Text(
-        'REAL DATA  •  PRACTICAL EVALUATION  •  NO HYPE METRICS',
+        'SMART RECOMMENDATIONS  •  PERSONALIZED  •  INSTANT RESULTS',
         textAlign: TextAlign.center,
         style: GoogleFonts.ibmPlexMono(
           fontSize: 10,
@@ -203,7 +204,9 @@ class _CtaButton extends StatelessWidget {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          context.go('/assistant');
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
@@ -216,7 +219,7 @@ class _CtaButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Explore Tools',
+              'Talk to AI Assistant',
               style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,

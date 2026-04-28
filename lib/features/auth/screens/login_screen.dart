@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22),
                                 ),
                                 const SizedBox(width: 14),
-                                Text('AI HUB', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+                                Text('AI TOOLS HUB', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
                               ],
                             ),
                           ),
@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 Text(
                                   _isLoginMode 
                                     ? 'Sign in to access your dashboard'
-                                    : 'Join AI Hub to start your journey',
+                                    : 'Join AI Tools Hub to start your journey',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     fontSize: 13,

@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:toolshub/core/config/app_config.dart';
+import 'package:toolshub/core/config/api_constants.dart';
 import '../models/assistant_api_models.dart';
 
 class AssistantApiService {
-  // ── Config ──────────────────────────────────────────────────────────
-  static final String _webhookUrl = AppConfig.assistantWebhookUrl;
-  static final String _apiKey = AppConfig.n8nApiKey;
-  static const Duration _timeout = Duration(minutes: 3);
+  // ── Config (sourced from ApiConstants / .env) ───────────────────────
+  static String get _webhookUrl => ApiConstants.assistantWebhookUrl;
+  static String get _apiKey => ApiConstants.n8nApiKey;
+  static Duration get _timeout => ApiConstants.defaultTimeout;
 
   /// Sends the prompt and filters to the n8n webhook.
   Future<AssistantResponse> getRecommendations(AssistantRequest request) async {

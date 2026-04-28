@@ -36,7 +36,7 @@ class RazorpayCheckoutService {
       'key': _razorpayKeyId,
       'amount': plan.amountSmallest,
       'currency': plan.currency,
-      'name': 'Tools Hub',
+      'name': 'AI Tools Hub',
       'description': 'Pro Subscription',
       'prefill': {
         'email': userEmail,

@@ -10,6 +10,7 @@ import 'package:toolshub/core/providers/trending_provider.dart';
 import 'package:toolshub/config/firebase_options.dart';
 import 'package:toolshub/core/navigation/app_router.dart';
 import 'package:toolshub/core/providers/pinned_tools_provider.dart';
+import 'package:toolshub/core/di/dependency_injection.dart';
 
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:toolshub/core/config/app_config.dart';
@@ -19,6 +20,10 @@ void main() async {
   usePathUrlStrategy();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.init();
+  
+  // Initialize dependency injection container
+  DependencyInjection.instance.initialize();
+  
   runApp(
     ProviderScope(
       child: legacy_provider.MultiProvider(
@@ -52,7 +57,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Tool Hub',
+      title: 'AI Tools Hub',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

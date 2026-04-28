@@ -42,7 +42,7 @@ class Footer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'TOOLSHUB',
+          'AI TOOLS HUB',
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w800,

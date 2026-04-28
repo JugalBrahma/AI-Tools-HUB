@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:toolshub/core/config/app_config.dart';
+import 'package:toolshub/core/config/api_constants.dart';
 import 'package:toolshub/core/utils/html_stub.dart'
     if (dart.library.html) 'dart:html'
     as html;
 
 class PaymentIntegrationService {
-  static final String _n8nWebhookUrl = AppConfig.paymentWebhookUrl;
+  static String get _n8nWebhookUrl => ApiConstants.paymentWebhookUrl;
 
   /// Sends subscription data to n8n to initiate a payment session or record intent.
   /// [amount] should be in paise (e.g., 10000 for ₹100.00)
@@ -32,7 +32,7 @@ class PaymentIntegrationService {
         Uri.parse(_n8nWebhookUrl),
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': AppConfig.n8nApiKey,
+          'X-API-Key': ApiConstants.n8nApiKey,
         },
         body: jsonEncode({
           'uid': uid,
