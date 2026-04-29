@@ -38,13 +38,9 @@ class RazorpayCheckoutService {
       'currency': plan.currency,
       'name': 'AI Tools Hub',
       'description': 'Pro Subscription',
-      'prefill': {
-        'email': userEmail,
-        'contact': '',
-        'name': userName,
-      },
+      'prefill': {'email': userEmail, 'contact': '', 'name': userName},
       'notes': {
-        'uid': uid,       // used to update Firestore after payment
+        'uid': uid, // used to update Firestore after payment
         'plan': plan.tier.name,
         'currency': plan.currency,
       },
@@ -109,20 +105,20 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   PricePlan _detectLocale() {
     // Strategy 1: direct countryCode from primary locale (works on mobile)
-    final primaryLocale =
-        WidgetsBinding.instance.platformDispatcher.locale;
+    final primaryLocale = WidgetsBinding.instance.platformDispatcher.locale;
     if (primaryLocale.countryCode == 'IN') return PricePlan.proIndia;
 
     // Strategy 2: scan all locales (some browsers report en-IN in secondary slots)
-    final allLocales =
-        WidgetsBinding.instance.platformDispatcher.locales;
+    final allLocales = WidgetsBinding.instance.platformDispatcher.locales;
     if (allLocales.any((l) => l.countryCode == 'IN')) return PricePlan.proIndia;
 
     // Strategy 3: timezone offset — IST is always UTC+5:30 = 330 minutes.
     // This is the most reliable signal on Flutter Web where locale country
     // codes are often stripped by the browser.
     final tzOffset = DateTime.now().timeZoneOffset.inMinutes;
-    debugPrint('🌍 Locale: ${primaryLocale.toLanguageTag()} | TZ offset: ${tzOffset}min');
+    debugPrint(
+      '🌍 Locale: ${primaryLocale.toLanguageTag()} | TZ offset: ${tzOffset}min',
+    );
     if (tzOffset == 330) return PricePlan.proIndia;
 
     return PricePlan.proGlobal;
@@ -153,9 +149,6 @@ class _PaywallScreenState extends State<PaywallScreen>
     _openSpecificCheckout(_selectedPlan);
   }
 
-
-
-
   // ── Razorpay callbacks ─────────────────────────────────────────────────────
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
@@ -179,7 +172,9 @@ class _PaywallScreenState extends State<PaywallScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message ?? 'Payment failed. Please try again.'),
+          content: Text(
+            response.message ?? 'Payment failed. Please try again.',
+          ),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -217,8 +212,10 @@ class _PaywallScreenState extends State<PaywallScreen>
                     _buildProBadge(),
                     const SizedBox(height: 32),
                     _buildPriceBlock(),
-                    const SizedBox(height: 40),
-                    _buildFeatureList(),
+                    const SizedBox(height: 48),
+                    Center(
+                      child: SizedBox(width: 320, child: _buildFeatureList()),
+                    ),
                     const SizedBox(height: 48),
                     _buildSubscribeButton(),
                     const SizedBox(height: 32),
@@ -313,63 +310,84 @@ class _PaywallScreenState extends State<PaywallScreen>
       opacity: _priceAnim,
       child: ScaleTransition(
         scale: Tween<double>(begin: 0.85, end: 1.0).animate(_priceAnim),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 40),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0D0D12),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: const Color(0xFF4A89FF).withOpacity(0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF4A89FF).withOpacity(0.08),
-                blurRadius: 60,
-                spreadRadius: -10,
+        child: Center(
+          child: Container(
+            width: 320,
+            constraints: const BoxConstraints(minHeight: 220),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D0D12),
+              gradient: RadialGradient(
+                center: const Alignment(-0.5, -0.6),
+                radius: 1.2,
+                colors: [
+                  const Color(0xFF4A89FF).withOpacity(0.1),
+                  const Color(0xFF0D0D12),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Show crossed-out original price if there's a discount
-              if (_selectedPlan.originalPrice != _selectedPlan.displayPrice) ...[
-                Text(
-                  _selectedPlan.originalPrice,
-                  style: GoogleFonts.inter(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white38,
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: Colors.white38,
-                    letterSpacing: -1,
-                  ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: const Color(0xFF4A89FF).withOpacity(0.2),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4A89FF).withOpacity(0.08),
+                  blurRadius: 60,
+                  spreadRadius: -10,
                 ),
-                const SizedBox(height: 8),
               ],
-              Text(
-                _selectedPlan.displayPrice,
-                style: GoogleFonts.inter(
-                  fontSize: 64,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -2,
-                ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Show crossed-out original price if there's a discount
+                  if (_selectedPlan.originalPrice !=
+                      _selectedPlan.displayPrice) ...[
+                    Text(
+                      _selectedPlan.originalPrice,
+                      style: GoogleFonts.inter(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white38,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: Colors.white38,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    _selectedPlan.displayPrice,
+                    style: GoogleFonts.inter(
+                      fontSize: 64,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _selectedPlan.originalPrice != _selectedPlan.displayPrice
+                        ? 'Limited time offer'
+                        : (_selectedPlan.isIndia
+                              ? 'One-time (INR)'
+                              : 'One-time (USD)'),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color:
+                          _selectedPlan.originalPrice !=
+                              _selectedPlan.displayPrice
+                          ? const Color(0xFF00D4AA)
+                          : Colors.white24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                _selectedPlan.originalPrice != _selectedPlan.displayPrice
-                    ? 'Limited time offer'
-                    : (_selectedPlan.isIndia ? 'One-time (INR)' : 'One-time (USD)'),
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: _selectedPlan.originalPrice != _selectedPlan.displayPrice
-                      ? const Color(0xFF00D4AA)
-                      : Colors.white24,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -423,50 +441,58 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   Widget _buildSubscribeButton() {
     final auth = context.watch<AuthProvider>();
-    final hasActivePlan = auth.isPro || auth.plan == 'trial' || auth.status == 'trial';
+    final hasActivePlan =
+        auth.isPro || auth.plan == 'trial' || auth.status == 'trial';
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: (_isProcessing || hasActivePlan) ? null : _openCheckout,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4A89FF),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF4A89FF).withOpacity(0.5),
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+    return Center(
+      child: SizedBox(
+        width: 320,
+        child: ElevatedButton(
+          onPressed: (_isProcessing || hasActivePlan) ? null : _openCheckout,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4A89FF),
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF4A89FF).withOpacity(0.5),
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
-        ),
-        child: _isProcessing
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(hasActivePlan ? Icons.check_circle_rounded : Icons.lock_open_rounded, size: 18),
-                  const SizedBox(width: 10),
-                  Text(
-                    hasActivePlan ? 'Already Active Member' : 'Subscribe Now — ${_selectedPlan.displayPrice}',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
+          child: _isProcessing
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-                ],
-              ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      hasActivePlan
+                          ? Icons.check_circle_rounded
+                          : Icons.lock_open_rounded,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      hasActivePlan
+                          ? 'Already Active Member'
+                          : 'Subscribe Now — ${_selectedPlan.displayPrice}',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
-
-
 
   Widget _buildLegalText() {
     return Text(
@@ -474,5 +500,4 @@ class _PaywallScreenState extends State<PaywallScreen>
       style: GoogleFonts.inter(fontSize: 11, color: Colors.white12),
     );
   }
-
 }

@@ -247,6 +247,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     bool isLocked = false,
   }) {
     return Container(
+      width: 320,
+      constraints: const BoxConstraints(minHeight: 480),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D12),
@@ -265,9 +267,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               ]
             : null,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -425,8 +429,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _handleSubscriptionTrigger(String title, PricePlan? plan) async {
     if (kDebugMode) {

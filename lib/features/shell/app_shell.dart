@@ -204,6 +204,7 @@ class _AppShellState extends State<AppShell> {
   Widget _buildRightDrawer() {
     return Drawer(
       backgroundColor: const Color(0xFF08080A),
+      elevation: 0,
       width: 320,
       child: Container(
         decoration: const BoxDecoration(
@@ -280,7 +281,7 @@ class _AppShellState extends State<AppShell> {
                   const SizedBox(height: 8),
                   _buildDrawerSectionHeader('SUPPORT'),
                   _buildDrawerLink(
-                    'Call Support',
+                    'Support',
                     Icons.support_agent_rounded,
                     -1,
                     isComingSoon: true,
@@ -586,72 +587,123 @@ class _AppShellState extends State<AppShell> {
     Widget? badge,
   }) {
     final bool isActive = index != -1 && _currentIndex == index;
-    return ListTile(
-      onTap: () {
-        if (index != -1) {
-          if (index == -2) {
-            AppNavigator.toSubscription(context, closeDrawer: true);
-            return;
-          }
-          if (index == -3) {
-            AppNavigator.toBookmarks(context, closeDrawer: true);
-            return;
-          }
-
-          _navigate(index);
-          Navigator.pop(context);
-        } else if (isComingSoon) {
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '$title feature is coming soon!',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              ),
-              backgroundColor: const Color(0xFF1D5A9E),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      },
-      leading: Icon(
-        icon,
-        color: color ?? (isActive ? const Color(0xFF4A89FF) : Colors.white54),
-        size: 18,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
       ),
-      title: Row(
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color:
-                  color ??
-                  (isActive ? const Color(0xFF4A89FF) : Colors.white70),
-            ),
-          ),
-          if (badge != null) ...[const SizedBox(width: 8), badge],
-          if (isComingSoon) ...[
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00A8FF).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+      child: ListTile(
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        onTap: () {
+          if (index != -1) {
+            if (index == -2) {
+              AppNavigator.toSubscription(context, closeDrawer: true);
+              return;
+            }
+            if (index == -3) {
+              AppNavigator.toBookmarks(context, closeDrawer: true);
+              return;
+            }
+
+            _navigate(index);
+            Navigator.pop(context);
+          } else if (isComingSoon) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: const Color(0xFF111118),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: const Color(0xFF00D4AA).withOpacity(0.2),
+                  ),
+                ),
+                content: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00D4AA).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.rocket_launch_rounded,
+                        color: Color(0xFF00D4AA),
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Coming Soon!',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'The $title feature is currently in development.',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.white60,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                duration: const Duration(seconds: 3),
               ),
-              child: Text(
-                'SOON',
-                style: GoogleFonts.ibmPlexMono(
-                  fontSize: 7,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF00A8FF),
-                  letterSpacing: 1.0,
+            );
+          }
+        },
+        leading: Icon(
+          icon,
+          color: color ?? (isActive ? const Color(0xFF4A89FF) : Colors.white54),
+          size: 18,
+        ),
+        title: Row(
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: color ??
+                    (isActive ? const Color(0xFF4A89FF) : Colors.white70),
+              ),
+            ),
+            if (badge != null) ...[const SizedBox(width: 8), badge],
+            if (isComingSoon) ...[
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00A8FF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'SOON',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 7,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF00A8FF),
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
