@@ -58,8 +58,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   const SizedBox(height: 48),
                   _buildPricingCards(),
                   _buildTrustBadges(),
-                  const SizedBox(height: 48),
-                  _buildTestPlanContainer(),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -137,6 +135,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Widget _buildPricingCards() {
+    final auth = context.watch<AuthProvider>();
+    final isTrial = auth.plan == 'trial' || auth.status == 'trial';
+    final isPro = auth.isPro && !isTrial;
+    final hasActivePlan = auth.isPro || isTrial;
+    final isFree = !hasActivePlan;
+
     final isIndia = _activePlan.isIndia;
     final trialPlan = PricePlan.getTrial(isIndia);
     final proPlan = PricePlan.getPro(isIndia);
@@ -153,7 +157,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   'Basic Search',
                   '10 Bookmarks',
                   '2 AI generations / month',
-                ]),
+                ], isCurrentPlan: isFree, isLocked: hasActivePlan),
               ),
               const SizedBox(width: 24),
               Expanded(
@@ -166,6 +170,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   subLabel: 'One-time payment',
                   isFeatured: true,
                   badgeText: 'TRIAL OFFER',
+                  isCurrentPlan: isTrial,
+                  isLocked: hasActivePlan,
                 ),
               ),
               const SizedBox(width: 24),
@@ -180,6 +186,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     'Priority Support',
                   ],
                   plan: proPlan,
+                  isCurrentPlan: isPro,
+                  isLocked: hasActivePlan,
                 ),
               ),
             ],
@@ -191,7 +199,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 'Basic Search',
                 '10 Bookmarks',
                 '2 AI generations / month',
-              ]),
+              ], isCurrentPlan: isFree, isLocked: hasActivePlan),
               const SizedBox(height: 24),
               _pricingCard(
                 'Trial',
@@ -202,6 +210,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 subLabel: 'One-time payment',
                 isFeatured: true,
                 badgeText: 'TRIAL OFFER',
+                isCurrentPlan: isTrial,
+                isLocked: hasActivePlan,
               ),
               const SizedBox(height: 24),
               _pricingCard(
@@ -214,6 +224,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   'Priority Support',
                 ],
                 plan: proPlan,
+                isCurrentPlan: isPro,
+                isLocked: hasActivePlan,
               ),
             ],
           );
@@ -231,6 +243,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     String suffix = '/mo',
     String subLabel = 'Billed monthly',
     String badgeText = 'MOST POPULAR',
+    bool isCurrentPlan = false,
+    bool isLocked = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -291,6 +305,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
+              // Show crossed-out original price if there's a discount
+              if (plan != null && plan.originalPrice != plan.displayPrice) ...[
+                Text(
+                  plan.originalPrice,
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white38,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: Colors.white38,
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
               Text(
                 '${_activePlan.symbol}$price',
                 style: GoogleFonts.inter(
@@ -311,10 +339,21 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            subLabel,
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.white24),
-          ),
+          // Show discount percentage if applicable
+          if (plan != null && plan.originalPrice != plan.displayPrice)
+            Text(
+              'Limited time offer',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF00D4AA),
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else
+            Text(
+              subLabel,
+              style: GoogleFonts.inter(fontSize: 13, color: Colors.white24),
+            ),
           const SizedBox(height: 32),
           const Divider(color: Color(0xFF1A1A24)),
           const SizedBox(height: 32),
@@ -346,14 +385,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: (_isProcessing || title == 'Free')
+              onPressed: (_isProcessing || isCurrentPlan || isLocked)
                   ? null
                   : () => _handleSubscriptionTrigger(title, plan),
               style: ElevatedButton.styleFrom(
-                disabledBackgroundColor: title == 'Free'
+                disabledBackgroundColor: (title == 'Free' || isCurrentPlan || isLocked)
                     ? const Color(0xFF1A1A24)
                     : null,
-                disabledForegroundColor: title == 'Free'
+                disabledForegroundColor: (title == 'Free' || isCurrentPlan || isLocked)
                     ? Colors.white54
                     : null,
                 backgroundColor: isFeatured
@@ -376,7 +415,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       ),
                     )
                   : Text(
-                      title == 'Free' ? 'Current Plan' : 'Get Started',
+                      isCurrentPlan ? 'Current Plan' : (isLocked ? 'Locked (Plan Active)' : 'Get Started'),
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
@@ -649,81 +688,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     );
   }
 
-  Widget _buildTestPlanContainer() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFF4A4A).withOpacity(0.05),
-        border: Border.all(color: const Color(0xFFFF4A4A).withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.bug_report_rounded,
-                color: Color(0xFFFF4A4A),
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Developer Test Plan',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFFFF4A4A),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Use this ₹1 plan to test the 2-minute expiration logic. It sets "plan": "test" for the webhook.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.white54,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: (_isProcessing || _processingPlan != null)
-                  ? null
-                  : () =>
-                        _handleSubscriptionTrigger('Test2Min', PricePlan.test),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFFF4A4A)),
-                foregroundColor: const Color(0xFFFF4A4A),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: _isProcessing && _processingPlan == 'Test2Min'
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFFF4A4A),
-                        ),
-                      ),
-                    )
-                  : Text(
-                      'Test Purchase (₹1)',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _badge(IconData icon, String text) {
     return Row(

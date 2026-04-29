@@ -275,6 +275,18 @@ class _AppShellState extends State<AppShell> {
                 if (auth.isLoggedIn && auth.expiryDate != null)
                   _MembershipExpiryInfo(auth: auth),
 
+                if (auth.isPro) ...[
+                  const SizedBox(height: 8),
+                  _buildDrawerSectionHeader('SUPPORT'),
+                  _buildDrawerLink(
+                    'Call Support',
+                    Icons.support_agent_rounded,
+                    -1,
+                    isComingSoon: true,
+                    color: const Color(0xFF4A89FF),
+                  ),
+                ],
+
                 /*
                 _buildDrawerLink(
                   'Submit Tool',
@@ -391,6 +403,15 @@ class _AppShellState extends State<AppShell> {
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: 2),
+              Text(
+                'ID: ${user?.uid ?? "N/A"}',
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 9,
+                  color: Colors.white24,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
@@ -401,6 +422,8 @@ class _AppShellState extends State<AppShell> {
 
   Widget _buildStatusBadge(app_auth.AuthProvider auth) {
     final isTrial = auth.status == 'trial';
+    final planName = (auth.plan ?? (isTrial ? 'TRIAL' : 'PRO')).toUpperCase();
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -408,7 +431,7 @@ class _AppShellState extends State<AppShell> {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        isTrial ? 'TRIAL' : 'PRO',
+        planName,
         style: GoogleFonts.ibmPlexMono(
           fontSize: 8,
           fontWeight: FontWeight.w900,
@@ -766,6 +789,10 @@ class _MembershipExpiryInfoState extends State<_MembershipExpiryInfo> {
         ? '${days}d ${hours}h ${minutes}m ${seconds}s'
         : '${hours}h ${minutes}m ${seconds}s';
 
+    final isTrial = widget.auth.status == 'trial';
+    final planName = (widget.auth.plan ?? (isTrial ? 'TRIAL' : 'PRO PLAN')).toUpperCase();
+    final expiryText = '$planName EXPIRES IN';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Container(
@@ -784,7 +811,7 @@ class _MembershipExpiryInfoState extends State<_MembershipExpiryInfo> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'PRO PLAN EXPIRES IN',
+                    expiryText,
                     style: GoogleFonts.ibmPlexMono(
                       fontSize: 8,
                       fontWeight: FontWeight.w700,

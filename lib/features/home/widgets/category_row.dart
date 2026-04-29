@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:toolshub/core/models/tool_model.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
-import 'package:toolshub/features/categories/widgets/logo_widget.dart';
+import 'package:toolshub/core/widgets/logo_widget.dart';
 
 class CategoryRow extends StatelessWidget {
   const CategoryRow({super.key});

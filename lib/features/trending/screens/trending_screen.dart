@@ -2,10 +2,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:toolshub/core/models/trending_model.dart';
 import 'package:toolshub/core/providers/trending_provider.dart';
+import 'package:toolshub/core/models/trending_model.dart';
+import 'package:toolshub/core/models/tool_model.dart';
+import 'package:toolshub/core/widgets/logo_widget.dart';
 import 'package:toolshub/features/home/widgets/animated_background.dart';
-import 'package:toolshub/features/categories/widgets/logo_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
 
@@ -118,7 +119,9 @@ class _TrendingScreenState extends State<TrendingScreen> {
         width: 300,
         child: Container(
           decoration: const BoxDecoration(
-            border: Border(right: BorderSide(color: Color(0xFF15151A), width: 1)),
+            border: Border(
+              right: BorderSide(color: Color(0xFF15151A), width: 1),
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
@@ -146,7 +149,10 @@ class _TrendingScreenState extends State<TrendingScreen> {
                     const SizedBox(
                       width: 280,
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 48,
+                          horizontal: 24,
+                        ),
                         child: _CategorySidebar(),
                       ),
                     ),
@@ -169,9 +175,7 @@ class _TrendingScreenState extends State<TrendingScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (isMobile) const SizedBox(height: 40),
-                                ScrollReveal(
-                                  child: const _TrendingHeader(),
-                                ),
+                                ScrollReveal(child: const _TrendingHeader()),
                                 const SizedBox(height: 40),
                                 ScrollReveal(
                                   delay: 0.1,
@@ -1155,7 +1159,12 @@ class _CategorySidebar extends StatelessWidget {
         const SizedBox(height: 16),
 
         ...categories.map(
-          (cat) => _SidebarItem(title: cat.$1, icon: cat.$2, isActive: cat.$3, isComingSoon: cat.$4),
+          (cat) => _SidebarItem(
+            title: cat.$1,
+            icon: cat.$2,
+            isActive: cat.$3,
+            isComingSoon: cat.$4,
+          ),
         ),
         const SizedBox(height: 32),
         // Premium Support Card or similar

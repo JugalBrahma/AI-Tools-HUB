@@ -222,8 +222,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                     const SizedBox(height: 48),
                     _buildSubscribeButton(),
                     const SizedBox(height: 32),
-                    _buildTestPlanContainer(),
-                    const SizedBox(height: 32),
                     _buildLegalText(),
                   ],
                 ),
@@ -334,6 +332,21 @@ class _PaywallScreenState extends State<PaywallScreen>
           ),
           child: Column(
             children: [
+              // Show crossed-out original price if there's a discount
+              if (_selectedPlan.originalPrice != _selectedPlan.displayPrice) ...[
+                Text(
+                  _selectedPlan.originalPrice,
+                  style: GoogleFonts.inter(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white38,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: Colors.white38,
+                    letterSpacing: -1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(
                 _selectedPlan.displayPrice,
                 style: GoogleFonts.inter(
@@ -345,11 +358,15 @@ class _PaywallScreenState extends State<PaywallScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                _selectedPlan.isIndia ? 'One-time (INR)' : 'One-time (USD)',
+                _selectedPlan.originalPrice != _selectedPlan.displayPrice
+                    ? 'Limited time offer'
+                    : (_selectedPlan.isIndia ? 'One-time (INR)' : 'One-time (USD)'),
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: Colors.white24,
-                  fontWeight: FontWeight.w500,
+                  color: _selectedPlan.originalPrice != _selectedPlan.displayPrice
+                      ? const Color(0xFF00D4AA)
+                      : Colors.white24,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -405,10 +422,13 @@ class _PaywallScreenState extends State<PaywallScreen>
   }
 
   Widget _buildSubscribeButton() {
+    final auth = context.watch<AuthProvider>();
+    final hasActivePlan = auth.isPro || auth.plan == 'trial' || auth.status == 'trial';
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isProcessing ? null : _openCheckout,
+        onPressed: (_isProcessing || hasActivePlan) ? null : _openCheckout,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4A89FF),
           foregroundColor: Colors.white,
@@ -431,10 +451,10 @@ class _PaywallScreenState extends State<PaywallScreen>
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.lock_open_rounded, size: 18),
+                  Icon(hasActivePlan ? Icons.check_circle_rounded : Icons.lock_open_rounded, size: 18),
                   const SizedBox(width: 10),
                   Text(
-                    'Subscribe Now — ${_selectedPlan.displayPrice}',
+                    hasActivePlan ? 'Already Active Member' : 'Subscribe Now — ${_selectedPlan.displayPrice}',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -455,66 +475,4 @@ class _PaywallScreenState extends State<PaywallScreen>
     );
   }
 
-  Widget _buildTestPlanContainer() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFF4A4A).withOpacity(0.05),
-        border: Border.all(color: const Color(0xFFFF4A4A).withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.bug_report_rounded, color: Color(0xFFFF4A4A), size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Developer Test Plan',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFFFF4A4A),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Use this ₹1 plan to test the 1-minute expiration logic. It sets "plan": "test" for the webhook.',
-            style: GoogleFonts.inter(fontSize: 12, color: Colors.white54, height: 1.4),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _isProcessing ? null : () => _openSpecificCheckout(PricePlan.test),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFFF4A4A)),
-                foregroundColor: const Color(0xFFFF4A4A),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: _isProcessing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF4A4A)),
-                      ),
-                    )
-                  : Text(
-                      'Test Purchase (₹1)',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

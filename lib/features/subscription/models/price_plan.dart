@@ -13,6 +13,7 @@ class PricePlan {
   final String displayPrice;
   final String countryCode;
   final SubscriptionTier tier;
+  final String originalPrice; // Original price before discount
 
   const PricePlan({
     required this.currency,
@@ -21,16 +22,18 @@ class PricePlan {
     required this.displayPrice,
     required this.countryCode,
     required this.tier,
+    required this.originalPrice,
   });
 
   // ── India Region ──────────────────────────────────────────────────────────
   static const PricePlan proIndia = PricePlan(
     currency: 'INR',
     symbol: '₹',
-    amountSmallest: 65700, // ₹657.00
-    displayPrice: '₹657',
+    amountSmallest: 63000, // ₹630.00 (discounted)
+    displayPrice: '₹630',
     countryCode: 'IN',
     tier: SubscriptionTier.pro,
+    originalPrice: '₹720',
   );
 
   static const PricePlan trialIndia = PricePlan(
@@ -40,16 +43,18 @@ class PricePlan {
     displayPrice: '₹94',
     countryCode: 'IN',
     tier: SubscriptionTier.trial,
+    originalPrice: '₹94',
   );
 
   // ── Global Region ─────────────────────────────────────────────────────────
   static const PricePlan proGlobal = PricePlan(
     currency: 'USD',
     symbol: '\$',
-    amountSmallest: 700, // $7.00
+    amountSmallest: 700, // $7.00 (discounted)
     displayPrice: '\$7',
     countryCode: 'US',
     tier: SubscriptionTier.pro,
+    originalPrice: '\$8',
   );
 
   static const PricePlan trialGlobal = PricePlan(
@@ -59,6 +64,7 @@ class PricePlan {
     displayPrice: '\$1',
     countryCode: 'US',
     tier: SubscriptionTier.trial,
+    originalPrice: '\$1',
   );
 
   // ── Test Logic ────────────────────────────────────────────────────────────
@@ -69,6 +75,7 @@ class PricePlan {
     displayPrice: '₹1 (Test)',
     countryCode: 'TEST',
     tier: SubscriptionTier.test,
+    originalPrice: '₹1 (Test)',
   );
 
   // ── Helpers ───────────────────────────────────────────────────────────────

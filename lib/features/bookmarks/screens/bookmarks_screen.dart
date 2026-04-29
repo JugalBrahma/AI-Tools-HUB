@@ -6,7 +6,7 @@ import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
 import 'package:toolshub/core/models/tool_model.dart';
-import 'package:toolshub/features/categories/widgets/tool_card.dart';
+import 'package:toolshub/core/widgets/bookmark_card.dart';
 
 class BookmarksScreen extends StatelessWidget {
   final VoidCallback? onDismiss;
@@ -22,7 +22,12 @@ class BookmarksScreen extends StatelessWidget {
         '&size=128';
   }
 
-  Future<void> _confirmDelete(BuildContext context, ToolInfo tool, BookmarkProvider bookmarkProvider, String uid) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    ToolInfo tool,
+    BookmarkProvider bookmarkProvider,
+    String uid,
+  ) async {
     final bool? shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -34,7 +39,10 @@ class BookmarksScreen extends StatelessWidget {
 
         title: Text(
           'Remove Bookmark?',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
         content: Text(
           'Are you sure you want to remove "${tool.name}" from your bookmarks?',
@@ -43,11 +51,20 @@ class BookmarksScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white38)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: Colors.white38),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Remove', style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Remove',
+              style: GoogleFonts.inter(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -71,14 +88,14 @@ class BookmarksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<app_auth.AuthProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     int crossAxisCount = 2;
     if (screenWidth > 1200) {
-      crossAxisCount = 5;
+      crossAxisCount = 6;
     } else if (screenWidth > 900) {
-      crossAxisCount = 4;
+      crossAxisCount = 5;
     } else if (screenWidth > 600) {
-      crossAxisCount = 3;
+      crossAxisCount = 4;
     }
 
     return Scaffold(
@@ -123,11 +140,11 @@ class BookmarksScreen extends StatelessWidget {
 
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            sliver: !auth.isLoggedIn 
+            sliver: !auth.isLoggedIn
                 ? SliverToBoxAdapter(child: _buildLoginPrompt())
                 : _buildUnifiedBookmarksGrid(context, auth, crossAxisCount),
           ),
-          
+
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ),
@@ -145,7 +162,11 @@ class BookmarksScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.lock_outline_rounded, color: Colors.white24, size: 48),
+          const Icon(
+            Icons.lock_outline_rounded,
+            color: Colors.white24,
+            size: 48,
+          ),
           const SizedBox(height: 20),
           Text(
             'Sign in to access your bookmarks',
@@ -160,7 +181,11 @@ class BookmarksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUnifiedBookmarksGrid(BuildContext context, app_auth.AuthProvider auth, int crossAxisCount) {
+  Widget _buildUnifiedBookmarksGrid(
+    BuildContext context,
+    app_auth.AuthProvider auth,
+    int crossAxisCount,
+  ) {
     final toolProvider = context.watch<ToolProvider>();
     final bookmarkProvider = context.watch<BookmarkProvider>();
 
@@ -187,7 +212,7 @@ class BookmarksScreen extends StatelessWidget {
           final url = data['url'] ?? '';
           final name = data['toolName'] ?? 'Unknown';
           final desc = data['why_it_fits'] ?? data['best_for'] ?? '';
-          
+
           final tool = ToolInfo(
             docId: doc.id,
             name: name,
@@ -206,30 +231,31 @@ class BookmarksScreen extends StatelessWidget {
 
         final combinedItems = [...aiItems, ...allItems];
 
-        if (combinedItems.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+        if (combinedItems.isEmpty &&
+            snapshot.connectionState != ConnectionState.waiting) {
           return SliverToBoxAdapter(child: _buildEmptyState());
         }
 
         return SliverGrid(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.85,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 260,
+            mainAxisExtent: 285,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final entry = combinedItems[index];
-              return ToolCard(
-                tool: entry.$1,
-                themeColor: entry.$2,
-                showBookmark: false,
-                showDelete: true,
-                onDelete: () => _confirmDelete(context, entry.$1, bookmarkProvider, auth.currentUser!.uid),
-              );
-            },
-            childCount: combinedItems.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final entry = combinedItems[index];
+            return BookmarkCard(
+              tool: entry.$1,
+              themeColor: entry.$2,
+              onDelete: () => _confirmDelete(
+                context,
+                entry.$1,
+                bookmarkProvider,
+                auth.currentUser!.uid,
+              ),
+            );
+          }, childCount: combinedItems.length),
         );
       },
     );
