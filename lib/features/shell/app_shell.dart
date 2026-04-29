@@ -211,7 +211,8 @@ class _AppShellState extends State<AppShell> {
         ),
         child: Consumer<app_auth.AuthProvider>(
           builder: (context, auth, child) {
-            return Column(
+            return ListView(
+              padding: EdgeInsets.zero,
               children: [
                 const SizedBox(height: 56),
 
@@ -296,8 +297,7 @@ class _AppShellState extends State<AppShell> {
                 ),
                 */
 
-                const Spacer(),
-
+                const SizedBox(height: 24),
                 const Divider(color: Color(0xFF15151A)),
                 const SizedBox(height: 8),
 

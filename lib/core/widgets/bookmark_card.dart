@@ -39,80 +39,122 @@ class _BookmarkCardState extends State<BookmarkCard> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        decoration: BoxDecoration(
-          color: _isHovered ? const Color(0xFF16161E) : const Color(0xFF0F0F15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: _isHovered ? color.withOpacity(0.45) : const Color(0xFF222228),
-            width: 1,
-          ),
-          boxShadow: _isHovered
-              ? [BoxShadow(color: color.withOpacity(0.08), blurRadius: 12, spreadRadius: 0)]
-              : [],
-        ),
-        child: Stack(
-          children: [
-            // ── Delete button (Top Right) ─────────────────────
-            Positioned(
-              top: 4,
-              right: 4,
-              child: _DeleteButton(onTap: widget.onDelete),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.02 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F0F15),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _isHovered ? color.withOpacity(0.5) : Colors.white.withOpacity(0.08),
+              width: 1.5,
             ),
-
-            // ── Main Content Centered ──────────────────────────
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // ── Logo ──────────────────────────────────────────
-                    LogoWidget(tool: tool, size: 34),
-                    const SizedBox(height: 10),
-
-                    // ── Tool name ────────────────────────────────────────
-                    Text(
-                      tool.name,
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-
-                    // ── Description ─────────────────────────────────────
-                    Text(
-                      tool.description,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        color: Colors.white38,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // ── Pricing badge ─────────────────────────────────────
-                    _PricingBadge(label: tool.pricing, color: color),
-
-                    const SizedBox(height: 12),
-
-                    // ── Visit button ─────────────────────────────────────
-                    _VisitButton(color: color, onTap: _launchUrl),
-                  ],
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: _isHovered ? color.withOpacity(0.15) : Colors.black.withOpacity(0.2),
+                blurRadius: _isHovered ? 30 : 10,
+                offset: const Offset(0, 10),
+                spreadRadius: _isHovered ? 2 : -5,
               ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                // ── Decorative Gradient Glow ──────────────────
+                Positioned(
+                  top: -50,
+                  right: -50,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          color.withOpacity(_isHovered ? 0.15 : 0.05),
+                          color.withOpacity(0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── Delete button (Top Right) ─────────────────────
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _DeleteButton(onTap: widget.onDelete),
+                ),
+
+                // ── Main Content Centered ──────────────────────────
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // ── Logo with glow ──────────────────────────
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.03),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withOpacity(0.05)),
+                          ),
+                          child: LogoWidget(tool: tool, size: 42),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // ── Tool name ────────────────────────────────────────
+                        Text(
+                          tool.name,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // ── Description ─────────────────────────────────────
+                        Text(
+                          tool.description,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.4),
+                            height: 1.4,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // ── Pricing badge ─────────────────────────────────────
+                        _PricingBadge(label: tool.pricing, color: color),
+
+                        const SizedBox(height: 20),
+
+                        // ── Visit button ─────────────────────────────────────
+                        _VisitButton(color: color, onTap: _launchUrl),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

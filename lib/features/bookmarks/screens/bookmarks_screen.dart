@@ -239,7 +239,7 @@ class BookmarksScreen extends StatelessWidget {
         return SliverGrid(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 260,
-            mainAxisExtent: 285,
+            mainAxisExtent: 380,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
