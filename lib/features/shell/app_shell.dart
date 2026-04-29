@@ -526,7 +526,7 @@ class _AppShellState extends State<AppShell> {
           ),
           child: Center(
             child: Text(
-              'Sign In / Create Account',
+              'Sign In',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,

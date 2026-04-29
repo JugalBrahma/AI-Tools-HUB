@@ -20,10 +20,10 @@ void main() async {
   usePathUrlStrategy();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.init();
-  
+
   // Initialize dependency injection container
   DependencyInjection.instance.initialize();
-  
+
   runApp(
     ProviderScope(
       child: legacy_provider.MultiProvider(

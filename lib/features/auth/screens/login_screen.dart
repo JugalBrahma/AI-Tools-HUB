@@ -17,12 +17,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool _loading = false;
-  bool _isLoginMode = true;
   String? _error;
-
-  final TextEditingController _emailCtrl = TextEditingController();
-  final TextEditingController _passwordCtrl = TextEditingController();
-  final TextEditingController _nameCtrl = TextEditingController();
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -55,47 +50,22 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _authSub?.cancel();
     _animCtrl.dispose();
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
-    _nameCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _signInWithGoogle() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final auth = context.read<app_auth.AuthProvider>();
     final error = await auth.signInWithGoogle();
     if (!mounted) return;
     if (error != null) {
-      setState(() { _error = error; _loading = false; });
-    } else {
-      widget.onDismiss?.call();
-    }
-  }
-
-  Future<void> _handleEmailAuth() async {
-    final email = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text.trim();
-    final name = _nameCtrl.text.trim();
-
-    if (email.isEmpty || password.isEmpty || (!_isLoginMode && name.isEmpty)) {
-      setState(() => _error = 'Please fill in all fields.');
-      return;
-    }
-
-    setState(() { _loading = true; _error = null; });
-    final auth = context.read<app_auth.AuthProvider>();
-    
-    String? error;
-    if (_isLoginMode) {
-      error = await auth.signInWithEmail(email, password);
-    } else {
-      error = await auth.signUpWithEmail(email, password, name);
-    }
-
-    if (!mounted) return;
-    if (error != null) {
-      setState(() { _error = error; _loading = false; });
+      setState(() {
+        _error = error;
+        _loading = false;
+      });
     } else {
       widget.onDismiss?.call();
     }
@@ -111,9 +81,11 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             // Background glow — top left
             Positioned(
-              top: -200, left: -200,
+              top: -200,
+              left: -200,
               child: Container(
-                width: 600, height: 600,
+                width: 600,
+                height: 600,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF00D4AA).withOpacity(0.04),
@@ -122,9 +94,11 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             // Background glow — bottom right
             Positioned(
-              bottom: -200, right: -200,
+              bottom: -200,
+              right: -200,
               child: Container(
-                width: 500, height: 500,
+                width: 500,
+                height: 500,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF4A89FF).withOpacity(0.05),
@@ -139,7 +113,10 @@ class _LoginScreenState extends State<LoginScreen>
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 80,
+                      ),
                       child: Column(
                         children: [
                           // ── Logo ─────────────────────────────────────────
@@ -150,15 +127,34 @@ class _LoginScreenState extends State<LoginScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
-                                  width: 44, height: 44,
+                                  width: 44,
+                                  height: 44,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(colors: [Color(0xFF00D4AA), Color(0xFF4A89FF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF00D4AA),
+                                        Color(0xFF4A89FF),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22),
+                                  child: const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
                                 ),
                                 const SizedBox(width: 14),
-                                Text('AI TOOLS HUB', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+                                Text(
+                                  'AI TOOLS HUB',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -171,7 +167,9 @@ class _LoginScreenState extends State<LoginScreen>
                             decoration: BoxDecoration(
                               color: const Color(0xFF0A0A0F),
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: const Color(0xFF1C1C2E)),
+                              border: Border.all(
+                                color: const Color(0xFF1C1C2E),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.4),
@@ -184,19 +182,18 @@ class _LoginScreenState extends State<LoginScreen>
                               children: [
                                 // Heading
                                 Text(
-                                  _isLoginMode ? 'Welcome Back' : 'Create Account',
+                                  'Welcome to AI Tools Hub',
+                                  textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    fontSize: 26,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 Text(
-                                  _isLoginMode 
-                                    ? 'Sign in to access your dashboard'
-                                    : 'Join AI Tools Hub to start your journey',
+                                  'Sign in to access premium AI tools, sync your bookmarks, and save your progress across all devices.',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
@@ -210,101 +207,66 @@ class _LoginScreenState extends State<LoginScreen>
                                 // Error message
                                 if (_error != null) ...[
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
                                     margin: const EdgeInsets.only(bottom: 20),
                                     decoration: BoxDecoration(
                                       color: Colors.redAccent.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+                                      border: Border.all(
+                                        color: Colors.redAccent.withOpacity(
+                                          0.2,
+                                        ),
+                                      ),
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 16),
+                                        const Icon(
+                                          Icons.error_outline_rounded,
+                                          color: Colors.redAccent,
+                                          size: 16,
+                                        ),
                                         const SizedBox(width: 10),
                                         Expanded(
-                                          child: Text(_error!, style: GoogleFonts.inter(fontSize: 13, color: Colors.redAccent)),
+                                          child: Text(
+                                            _error!,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13,
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 ],
-
-                                // ── Text Fields ──────────────────────────────────
-                                if (!_isLoginMode) ...[
-                                  _CustomTextField(
-                                    controller: _nameCtrl,
-                                    hintText: 'Full Name',
-                                    icon: Icons.person_outline_rounded,
-                                  ),
-                                  const SizedBox(height: 16),
-                                ],
-                                _CustomTextField(
-                                  controller: _emailCtrl,
-                                  hintText: 'Email Address',
-                                  icon: Icons.email_outlined,
-                                  keyboardType: TextInputType.emailAddress,
-                                ),
-                                const SizedBox(height: 16),
-                                _CustomTextField(
-                                  controller: _passwordCtrl,
-                                  hintText: 'Password',
-                                  icon: Icons.lock_outline_rounded,
-                                  isPassword: true,
-                                ),
-
-                                const SizedBox(height: 24),
-
-                                // Main Action Button
-                                _loading
-                                    ? const CircularProgressIndicator(color: Color(0xFF4A89FF), strokeWidth: 2)
-                                    : _PrimaryButton(
-                                        text: _isLoginMode ? 'Sign In' : 'Create Account',
-                                        onTap: _handleEmailAuth,
-                                      ),
-
-                                const SizedBox(height: 20),
-
-                                // Divider
-                                Row(
-                                  children: [
-                                    Expanded(child: Divider(color: const Color(0xFF1C1C2E))),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                                      child: Text('OR', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF444455), fontWeight: FontWeight.bold)),
-                                    ),
-                                    Expanded(child: Divider(color: const Color(0xFF1C1C2E))),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 20),
 
                                 // Google Sign-In button
-                                _GoogleButton(onTap: _signInWithGoogle),
+                                if (_loading)
+                                  const CircularProgressIndicator(
+                                    color: Color(0xFF4A89FF),
+                                    strokeWidth: 2,
+                                  )
+                                else
+                                  _GoogleButton(onTap: _signInWithGoogle),
 
                                 const SizedBox(height: 24),
-
-                                // Toggle Mode
-                                GestureDetector(
-                                  onTap: () => setState(() {
-                                    _isLoginMode = !_isLoginMode;
-                                    _error = null;
-                                  }),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF666677)),
-                                      children: [
-                                        TextSpan(text: _isLoginMode ? 'New here? ' : 'Already have an account? '),
-                                        TextSpan(
-                                          text: _isLoginMode ? 'Create account' : 'Sign in',
-                                          style: const TextStyle(color: Color(0xFF4A89FF), fontWeight: FontWeight.w600),
-                                        ),
-                                      ],
-                                    ),
+                                
+                                Text(
+                                  'By continuing, you agree to our Terms of Service and Privacy Policy.',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: const Color(0xFF444455),
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          
+
                         ],
                       ),
                     ),
@@ -313,90 +275,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Components ──────────────────────────────────────────────────────────────
-
-class _CustomTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-  final IconData icon;
-  final bool isPassword;
-  final TextInputType? keyboardType;
-
-  const _CustomTextField({
-    required this.controller,
-    required this.hintText,
-    required this.icon,
-    this.isPassword = false,
-    this.keyboardType,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E0E18),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1C1C2C)),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword,
-        keyboardType: keyboardType,
-        style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: GoogleFonts.inter(color: const Color(0xFF444455), fontSize: 14),
-          prefixIcon: Icon(icon, color: const Color(0xFF444455), size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-      ),
-    );
-  }
-}
-
-class _PrimaryButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
-
-  const _PrimaryButton({required this.text, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF4A89FF), Color(0xFF00D4AA)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF4A89FF).withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
         ),
       ),
     );
@@ -434,7 +312,13 @@ class _GoogleButtonState extends State<_GoogleButton> {
               width: 1.5,
             ),
             boxShadow: _hovering
-                ? [BoxShadow(color: const Color(0xFF4A89FF).withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 4))]
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF4A89FF).withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
                 : [],
           ),
           child: Row(
@@ -444,7 +328,14 @@ class _GoogleButtonState extends State<_GoogleButton> {
                 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
                 width: 18,
                 height: 18,
-                errorBuilder: (_, __, ___) => const Text('G', style: TextStyle(color: Color(0xFF4285F4), fontWeight: FontWeight.bold, fontSize: 16)),
+                errorBuilder: (_, __, ___) => const Text(
+                  'G',
+                  style: TextStyle(
+                    color: Color(0xFF4285F4),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Text(

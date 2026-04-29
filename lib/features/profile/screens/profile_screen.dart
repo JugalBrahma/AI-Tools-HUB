@@ -523,7 +523,7 @@ class _NotLoggedInView extends StatelessWidget {
           ],
         ),
         child: Text(
-          'Sign In / Create Account',
+          'Sign In',
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w700,
