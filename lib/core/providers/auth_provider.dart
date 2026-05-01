@@ -130,15 +130,23 @@ class AuthProvider with ChangeNotifier {
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
       
-      debugPrint('=== Google Sign-In Attempt ===');
-      debugPrint('Current Origin: ${Uri.base.origin}');
+      final currentOrigin = Uri.base.origin;
+      debugPrint('=== Google Sign-In Debug ===');
+      debugPrint('Current Origin: $currentOrigin');
+      debugPrint('Expected for Production: https://www.aiworkx.space');
+      debugPrint('Firebase Auth Domain: www.aiworkx.space');
       
-      final result = await _auth.signInWithPopup(googleProvider);
-      if (result.user != null) await _syncUserToFirestore(result.user!);
-      notifyListeners();
+      // Check if we're on the correct domain
+      if (!currentOrigin.contains('aiworkx.space')) {
+        return 'Please test on https://www.aiworkx.space instead of $currentOrigin';
+      }
+      
+      await _auth.signInWithRedirect(googleProvider);
+      // The result will be handled by authStateChanges listener
       return null; // success
     } catch (e) {
       debugPrint('Google Sign-In Error: $e');
+      debugPrint('Current Origin: ${Uri.base.origin}');
       return 'Google Sign-In failed: ${e.toString()}';
     }
   }
