@@ -158,6 +158,12 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Google Sign-In Error: $e');
       debugPrint('Current Origin: ${Uri.base.origin}');
+      
+      // Don't show error for popup closed by user (normal user action)
+      if (e.toString().contains('popup-closed-by-user')) {
+        return null; // Silent fail
+      }
+      
       return 'Google Sign-In failed: ${e.toString()}';
     }
   }

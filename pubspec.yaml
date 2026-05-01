@@ -87,8 +87,8 @@ flutter:
     - .env
     - assets/trending/
     - assets/logo/
-    - lib/core/assets/top_rated_ai_tools/
-    - lib/core/assets/scroll_logo/
+    - assets/top_rated_ai_tools/
+    - assets/scroll_logo/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

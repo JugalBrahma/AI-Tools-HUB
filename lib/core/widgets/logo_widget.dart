@@ -42,17 +42,17 @@ class _LogoWidgetState extends State<LogoWidget> {
 
     // 1. Priority: Top Rated AI Tools (Static mapping)
     if (matches('chatgpt') || url.contains('openai'))
-      return 'lib/core/assets/top_rated_ai_tools/chatgpt.png';
+      return 'assets/top_rated_ai_tools/chatgpt.png';
     if (matches('claude') || url.contains('anthropic'))
-      return 'lib/core/assets/top_rated_ai_tools/claude.png';
+      return 'assets/top_rated_ai_tools/claude.png';
     if (matches('gemini'))
-      return 'lib/core/assets/top_rated_ai_tools/gemini.png';
+      return 'assets/top_rated_ai_tools/gemini.png';
     if (matches('perplexity'))
-      return 'lib/core/assets/top_rated_ai_tools/perplexity.png';
+      return 'assets/top_rated_ai_tools/perplexity.png';
     if (matches('midjourney'))
-      return 'lib/core/assets/top_rated_ai_tools/midjourney.png';
+      return 'assets/top_rated_ai_tools/midjourney.png';
     if (matches('cursor'))
-      return 'lib/core/assets/top_rated_ai_tools/cursor.png';
+      return 'assets/top_rated_ai_tools/cursor.png';
 
     // 2. Secondary: Scroll Animation Logos (Dynamic mapping with overrides)
     // Naming Overrides for typos/specific filenames:
@@ -93,7 +93,7 @@ class _LogoWidgetState extends State<LogoWidget> {
     });
 
     if (foundAsset != null) {
-      return 'lib/core/assets/scroll_logo/$foundAsset';
+      return 'assets/scroll_logo/$foundAsset';
     }
 
     // 3. Fallback: Check if we have a direct slug match in the available assets
@@ -116,11 +116,11 @@ class _LogoWidgetState extends State<LogoWidget> {
       final jpgName = '$slug.jpg';
 
       if (availableAssets.contains(pngName)) {
-        return 'lib/core/assets/scroll_logo/$pngName';
+        return 'assets/scroll_logo/$pngName';
       } else if (availableAssets.contains(jpegName)) {
-        return 'lib/core/assets/scroll_logo/$jpegName';
+        return 'assets/scroll_logo/$jpegName';
       } else if (availableAssets.contains(jpgName)) {
-        return 'lib/core/assets/scroll_logo/$jpgName';
+        return 'assets/scroll_logo/$jpgName';
       }
     }
 
