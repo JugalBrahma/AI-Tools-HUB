@@ -133,12 +133,12 @@ class AuthProvider with ChangeNotifier {
       final currentOrigin = Uri.base.origin;
       debugPrint('=== Google Sign-In Debug ===');
       debugPrint('Current Origin: $currentOrigin');
-      debugPrint('Expected for Production: https://www.aiworkx.space');
-      debugPrint('Firebase Auth Domain: www.aiworkx.space');
+      debugPrint('Expected for Production: https://tools-hub-4c4a1.web.app');
+      debugPrint('Firebase Auth Domain: tools-hub-4c4a1.web.app');
       
       // Check if we're on the correct domain
-      if (!currentOrigin.contains('aiworkx.space')) {
-        return 'Please test on https://www.aiworkx.space instead of $currentOrigin';
+      if (!currentOrigin.contains('tools-hub-4c4a1.web.app')) {
+        return 'Please test on https://tools-hub-4c4a1.web.app instead of $currentOrigin';
       }
       
       await _auth.signInWithRedirect(googleProvider);
