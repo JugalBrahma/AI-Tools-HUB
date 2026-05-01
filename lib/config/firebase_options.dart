@@ -40,15 +40,20 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
+  static FirebaseOptions get web {
+  final isLocalhost = Uri.base.host.contains('localhost') || 
+                      Uri.base.host.contains('127.0.0.1');
+  
+  return FirebaseOptions(
     apiKey: 'AIzaSyCj_s4kzqb0iEx6RXjBR33-YkqMAIcZLhM',
     appId: '1:882099140446:web:a12aea45170a821b9901cf',
     messagingSenderId: '882099140446',
     projectId: 'tools-hub-4c4a1',
-    authDomain: 'www.aiworkx.space',
+    authDomain: isLocalhost ? 'tools-hub-4c4a1.firebaseapp.com' : 'www.aiworkx.space',
     storageBucket: 'tools-hub-4c4a1.firebasestorage.app',
     measurementId: 'G-L0Z7ZX0692',
   );
+}
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAjOhQWmz69EPIJ30bVjTwsEc-iRR0Uv38',
