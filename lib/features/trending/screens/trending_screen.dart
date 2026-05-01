@@ -162,33 +162,44 @@ class _TrendingScreenState extends State<TrendingScreen> {
 
                   // Content Area
                   Expanded(
-                    child: SingleChildScrollView(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1100),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 48,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (isMobile) const SizedBox(height: 40),
-                                ScrollReveal(child: const _TrendingHeader()),
-                                const SizedBox(height: 40),
-                                ScrollReveal(
-                                  delay: 0.1,
-                                  child: tp.isLoading
-                                      ? const _LoadingState()
-                                      : _BentoGrid(tp: tp),
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1100),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 48,
                                 ),
-                                const SizedBox(height: 80),
-                              ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (isMobile) const SizedBox(height: 40),
+                                    ScrollReveal(child: const _TrendingHeader()),
+                                    const SizedBox(height: 40),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          sliver: SliverToBoxAdapter(
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 1100),
+                                child: tp.isLoading
+                                    ? const _LoadingState()
+                                    : _BentoGrid(tp: tp),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                      ],
                     ),
                   ),
                 ],
@@ -345,56 +356,52 @@ class _DesktopGrid extends StatelessWidget {
     return Column(
       children: [
         // Row 1: Overall (LONG) ── Coding (SHORT)
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: longW,
-                child: _TrendingBentoCard(
-                  cat: cats[0],
-                  entries: tp.entriesFor(cats[0].firestorePrefix),
-                  style: _BentoStyle.featuredWide,
-                ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: _TrendingBentoCard(
+                cat: cats[0],
+                entries: tp.entriesFor(cats[0].firestorePrefix),
+                style: _BentoStyle.featuredWide,
               ),
-              const SizedBox(width: gap),
-              SizedBox(
-                width: shortW,
-                child: _TrendingBentoCard(
-                  cat: cats[1],
-                  entries: tp.entriesFor(cats[1].firestorePrefix),
-                  style: _BentoStyle.compactTall,
-                ),
+            ),
+            const SizedBox(width: gap),
+            Expanded(
+              flex: 1,
+              child: _TrendingBentoCard(
+                cat: cats[1],
+                entries: tp.entriesFor(cats[1].firestorePrefix),
+                style: _BentoStyle.compactTall,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: gap),
 
         // Row 2: Image Gen (SHORT) ── Video Gen (LONG)
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: shortW,
-                child: _TrendingBentoCard(
-                  cat: cats[2],
-                  entries: tp.entriesFor(cats[2].firestorePrefix),
-                  style: _BentoStyle.compactTall,
-                ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 1,
+              child: _TrendingBentoCard(
+                cat: cats[2],
+                entries: tp.entriesFor(cats[2].firestorePrefix),
+                style: _BentoStyle.compactTall,
               ),
-              const SizedBox(width: gap),
-              SizedBox(
-                width: longW,
-                child: _TrendingBentoCard(
-                  cat: cats[3],
-                  entries: tp.entriesFor(cats[3].firestorePrefix),
-                  style: _BentoStyle.featuredWide,
-                ),
+            ),
+            const SizedBox(width: gap),
+            Expanded(
+              flex: 2,
+              child: _TrendingBentoCard(
+                cat: cats[3],
+                entries: tp.entriesFor(cats[3].firestorePrefix),
+                style: _BentoStyle.featuredWide,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: gap),
 

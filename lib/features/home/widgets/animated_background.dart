@@ -294,8 +294,8 @@ class _SectionPainter extends CustomPainter {
     canvas.drawPath(path, paint);
     
     // Subtle glow
-    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-    paint.strokeWidth = 3.0;
+    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+    paint.strokeWidth = 2.0;
     canvas.drawPath(path, paint);
   }
 

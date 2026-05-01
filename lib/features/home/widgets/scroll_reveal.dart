@@ -26,9 +26,9 @@ class _ScrollRevealState extends State<ScrollReveal> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    // On web, fire visibility updates immediately (no debounce throttle)
+    // On web, fire visibility updates with a small delay to prevent frame drops
     if (kIsWeb) {
-      VisibilityDetectorController.instance.updateInterval = Duration.zero;
+      VisibilityDetectorController.instance.updateInterval = const Duration(milliseconds: 150);
     }
 
     _controller = AnimationController(
