@@ -5,6 +5,7 @@ import 'package:toolshub/features/home/screens/home_screen.dart';
 import 'package:toolshub/features/bookmarks/screens/bookmarks_screen.dart';
 import 'package:toolshub/features/trending/screens/trending_screen.dart';
 import 'package:toolshub/features/ai_assistant/screens/ai_assistant_screen.dart';
+import 'package:toolshub/features/auth/screens/auth_callback_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -38,17 +39,17 @@ final goRouter = GoRouter(
         ),
       ],
     ),
-    // Firebase auth callback route
+    // Firebase auth callback routes
     GoRoute(
       path: '/__/auth/handler',
       builder: (context, state) {
-        // Firebase will handle the auth callback automatically
-        // Redirect to home after processing
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const AuthCallbackScreen();
+      },
+    ),
+    GoRoute(
+      path: '/__/auth/action',
+      builder: (context, state) {
+        return const AuthCallbackScreen();
       },
     ),
   ],
