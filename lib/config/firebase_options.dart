@@ -45,7 +45,7 @@ class DefaultFirebaseOptions {
     appId: '1:882099140446:web:a12aea45170a821b9901cf',
     messagingSenderId: '882099140446',
     projectId: 'tools-hub-4c4a1',
-    authDomain: 'tools-hub-4c4a1.web.app',
+    authDomain: 'www.aiworkx.space',
     storageBucket: 'tools-hub-4c4a1.firebasestorage.app',
     measurementId: 'G-L0Z7ZX0692',
   );
