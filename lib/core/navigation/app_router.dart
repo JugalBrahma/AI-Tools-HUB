@@ -38,5 +38,25 @@ final goRouter = GoRouter(
         ),
       ],
     ),
+    // Firebase auth callback route
+    GoRoute(
+      path: '/__/auth/handler',
+      builder: (context, state) {
+        // Firebase will handle the auth callback automatically
+        // Redirect to home after processing
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+    ),
   ],
+  redirect: (context, state) {
+    // Handle Firebase auth redirects
+    if (state.uri.path.startsWith('/__/auth/')) {
+      return null; // Let Firebase handle auth routes
+    }
+    return null; // No redirect
+  },
 );

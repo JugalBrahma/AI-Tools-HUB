@@ -145,6 +145,7 @@ class AuthProvider with ChangeNotifier {
       
       await _auth.signInWithRedirect(googleProvider);
       // The result will be handled by authStateChanges listener
+      debugPrint('Redirect initiated - waiting for callback...');
       return null; // success
     } catch (e) {
       debugPrint('Google Sign-In Error: $e');
