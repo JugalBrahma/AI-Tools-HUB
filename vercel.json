@@ -1,17 +1,16 @@
 {
   "buildCommand": "echo \"N8N_ASSISTANT_WEBHOOK_URL=$N8N_ASSISTANT_WEBHOOK_URL\" > .env && echo \"N8N_PAYMENT_WEBHOOK_URL=$N8N_PAYMENT_WEBHOOK_URL\" >> .env && echo \"N8N_API_KEY=$N8N_API_KEY\" >> .env && git clone https://github.com/flutter/flutter.git -b stable --depth 1 && ./flutter/bin/flutter build web --release --wasm",
   "outputDirectory": "build/web",
-  "trailingSlash": false,
-  "routes": [
+  "headers": [
     {
-      "src": "/(.*)",
-      "headers": {
-        "Cross-Origin-Embedder-Policy": "require-corp",
-        "Cross-Origin-Opener-Policy": "same-origin"
-      },
-      "continue": true
-    },
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
