@@ -131,21 +131,29 @@ class AuthProvider with ChangeNotifier {
       googleProvider.addScope('profile');
       
       final currentOrigin = Uri.base.origin;
+      final expectedRedirectUri = '$currentOrigin/__/auth/handler';
+      
       debugPrint('=== Google Sign-In Debug ===');
       debugPrint('Current Origin: $currentOrigin');
+      debugPrint('Expected Redirect URI: $expectedRedirectUri');
+      debugPrint('Firebase Auth Domain: www.aiworkx.space');
       
       // Support both localhost and production domains
       final isLocalhost = currentOrigin.contains('localhost') || currentOrigin.contains('127.0.0.1');
       final isProduction = currentOrigin.contains('aiworkx.space');
-      final isFirebaseDomain = currentOrigin.contains('tools-hub-4c4a1.web.app');
       
-      if (!isLocalhost && !isProduction && !isFirebaseDomain) {
-        return 'Please test on localhost, https://www.aiworkx.space, or https://tools-hub-4c4a1.web.app';
+      if (!isLocalhost && !isProduction) {
+        return 'Please test on localhost or https://www.aiworkx.space';
       }
       
-      await _auth.signInWithRedirect(googleProvider);
-      // The result will be handled by authStateChanges listener
-      debugPrint('Redirect initiated - waiting for callback...');
+      // Explicitly set the redirect URI for debugging
+      googleProvider.setCustomParameters({
+        'redirect_uri': expectedRedirectUri,
+      });
+      
+      final result = await _auth.signInWithPopup(googleProvider);
+      if (result.user != null) await _syncUserToFirestore(result.user!);
+      notifyListeners();
       return null; // success
     } catch (e) {
       debugPrint('Google Sign-In Error: $e');
