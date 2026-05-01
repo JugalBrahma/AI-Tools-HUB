@@ -130,7 +130,18 @@ class AuthProvider with ChangeNotifier {
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
       
-      // Let Firebase handle redirect URI automatically
+      // Debug: Print current origin and expected redirect URI
+      final currentOrigin = Uri.base.origin;
+      final expectedRedirectUri = '$currentOrigin/__/auth/handler';
+      debugPrint('=== Google Sign-In Debug ===');
+      debugPrint('Current Origin: $currentOrigin');
+      debugPrint('Expected Redirect URI: $expectedRedirectUri');
+      debugPrint('Firebase Auth Domain: www.aiworkx.space');
+      
+      // Explicitly set the redirect URI
+      googleProvider.setCustomParameters({
+        'redirect_uri': expectedRedirectUri,
+      });
       
       final result = await _auth.signInWithPopup(googleProvider);
       if (result.user != null) await _syncUserToFirestore(result.user!);
@@ -138,7 +149,6 @@ class AuthProvider with ChangeNotifier {
       return null; // success
     } catch (e) {
       debugPrint('Google Sign-In Error: $e');
-      debugPrint('Current Origin: ${Uri.base.origin}');
       return 'Google Sign-In failed: ${e.toString()}';
     }
   }
