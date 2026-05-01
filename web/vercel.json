@@ -9,12 +9,16 @@
         },
         {
           "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin"
+          "value": "same-origin-allow-popups"
         }
       ]
     }
   ],
   "rewrites": [
+    {
+      "source": "/__/auth/(.*)",
+      "destination": "https://tools-hub-4c4a1.firebaseapp.com/__/auth/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

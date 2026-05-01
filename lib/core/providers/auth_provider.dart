@@ -47,12 +47,17 @@ class AuthProvider with ChangeNotifier {
                     } else if (expiryVal is String) {
                       _expiryDate = DateTime.tryParse(expiryVal);
                     } else if (expiryVal is int) {
-                      _expiryDate = DateTime.fromMillisecondsSinceEpoch(expiryVal);
+                      _expiryDate = DateTime.fromMillisecondsSinceEpoch(
+                        expiryVal,
+                      );
                     } else if (expiryVal is Map) {
                       // Sometimes REST APIs / n8n save Timestamps as maps
-                      final seconds = expiryVal['_seconds'] ?? expiryVal['seconds'];
+                      final seconds =
+                          expiryVal['_seconds'] ?? expiryVal['seconds'];
                       if (seconds != null) {
-                        _expiryDate = DateTime.fromMillisecondsSinceEpoch((seconds as int) * 1000);
+                        _expiryDate = DateTime.fromMillisecondsSinceEpoch(
+                          (seconds as int) * 1000,
+                        );
                       }
                     } else {
                       // Fallback dynamic dispatch
@@ -72,10 +77,10 @@ class AuthProvider with ChangeNotifier {
                     _isPro = false;
                     _status = 'expired';
                     // Update Firestore to reflect expiration
-                    FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-                      'is_pro': false,
-                      'status': 'expired',
-                    });
+                    FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .update({'is_pro': false, 'status': 'expired'});
                   } else {
                     _startExpiryTimer(user.uid);
                   }
@@ -169,16 +174,18 @@ class AuthProvider with ChangeNotifier {
   // ── Sync / Create User Document in Firestore ─────────────────────────────
   Future<void> _syncUserToFirestore(User user) async {
     try {
-      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
       final doc = await userRef.get();
 
       if (!doc.exists) {
-        // ONLY Create fresh for new users. 
+        // ONLY Create fresh for new users.
         await userRef.set({
           'uid': user.uid,
           'email': user.email,
-          'is_pro': false,         
-          'status': 'free',        
+          'is_pro': false,
+          'status': 'free',
           'payment_id': null,
           'amount': 0.0,
           'last_ai_usage': null,
