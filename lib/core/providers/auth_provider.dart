@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -128,12 +129,17 @@ class AuthProvider with ChangeNotifier {
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
+      
+      // Let Firebase handle redirect URI automatically
+      
       final result = await _auth.signInWithPopup(googleProvider);
       if (result.user != null) await _syncUserToFirestore(result.user!);
       notifyListeners();
       return null; // success
     } catch (e) {
-      return 'Google Sign-In failed. Please try again.';
+      debugPrint('Google Sign-In Error: $e');
+      debugPrint('Current Origin: ${Uri.base.origin}');
+      return 'Google Sign-In failed: ${e.toString()}';
     }
   }
 
