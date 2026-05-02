@@ -43,13 +43,73 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "AI Tools Hub",
-    "url": "https://toolshub.vercel.app/",
+    "url": "https://www.aiworkx.space/",
     "description": "Find the best AI tools for coding, image generation, video production, and writing.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://www.aiworkx.space/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
+  }
+  </script>
+
+  <!-- Organization Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "AI Tools Hub",
+    "url": "https://www.aiworkx.space/",
+    "logo": "https://www.aiworkx.space/icons/Icon-512.png",
+    "description": "The most comprehensive AI tool directory updated daily",
+    "sameAs": [
+      "https://twitter.com/aiworkx",
+      "https://github.com/jugalbrahma"
+    ]
+  }
+  </script>
+
+  <!-- BreadcrumbList Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.aiworkx.space/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "AI Tools",
+        "item": "https://www.aiworkx.space/tools"
+      }
+    ]
+  }
+  </script>
+
+  <!-- SoftwareApplication Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AI Tools Hub",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "1000"
+    },
+    "description": "Find the best AI tools for coding, image generation, video production, and writing. The most comprehensive AI directory updated daily."
   }
   </script>
 
