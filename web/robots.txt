@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Block Firebase endpoints from being crawled
+Disallow: /__/firebase/
+Disallow: /__/auth/
+Disallow: /__/firestore/
+
+# Block other Firebase services
+Disallow: /*.firebaseio.com
+Disallow: /*.firebasedatabase.app
+Disallow: /*.firebasestorage.app
+Disallow: /*.functions.cloudfunctions.net
+
+# Sitemap
+Sitemap: https://www.aiworkx.space/sitemap.xml
