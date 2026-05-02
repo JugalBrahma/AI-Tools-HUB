@@ -155,8 +155,8 @@ class _LogoWidgetState extends State<LogoWidget> {
   String _wrapCORS(String url) {
     if (!kIsWeb || url.isEmpty || url.startsWith('assets/')) return url;
     // weserv.nl is a free image proxy that adds CORS headers
-    // Reverted to 2.5x for a natural, sharp look without over-sharpening
-    return 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}&w=${(widget.size * 2.5).toInt()}&fit=contain';
+    // Reduced to 2x for better performance while maintaining quality
+    return 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}&w=${(widget.size * 2).toInt()}&fit=contain';
   }
 
   void _nextStage() {
@@ -209,7 +209,7 @@ class _LogoWidgetState extends State<LogoWidget> {
           localPath,
           fit: BoxFit.contain,
           scale: 1.0,
-          filterQuality: FilterQuality.medium,
+          filterQuality: FilterQuality.high,
           errorBuilder: (context, error, stackTrace) {
             if (!widget.forceLocal) _nextStage();
             return _buildInitials();
@@ -238,14 +238,16 @@ class _LogoWidgetState extends State<LogoWidget> {
       child: CachedNetworkImage(
         imageUrl: url,
         fit: BoxFit.contain,
-        filterQuality: FilterQuality.medium,
-        memCacheWidth: (widget.size * 2.5).toInt(),
-        memCacheHeight: (widget.size * 2.5).toInt(),
+        filterQuality: FilterQuality.high,
+        memCacheWidth: (widget.size * 2).toInt(),
+        memCacheHeight: (widget.size * 2).toInt(),
         placeholder: (context, s) => _buildInitials(),
         errorWidget: (context, error, stack) {
           _nextStage();
           return _buildInitials();
         },
+        fadeInDuration: const Duration(milliseconds: 200),
+        fadeOutDuration: const Duration(milliseconds: 100),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/history_provider.dart';
@@ -20,6 +21,12 @@ void main() async {
   usePathUrlStrategy();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.init();
+
+  // Preload Google Fonts for better text rendering
+  await GoogleFonts.pendingFonts([
+    GoogleFonts.inter(),
+    GoogleFonts.ibmPlexMono(),
+  ]);
 
   // Initialize dependency injection container
   DependencyInjection.instance.initialize();
@@ -71,7 +78,19 @@ class MyApp extends StatelessWidget {
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         scaffoldBackgroundColor: const Color(0xFF050506),
+        // Ensure crisp text rendering
+        textTheme: ThemeData.dark().textTheme.apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
       ),
+      builder: (context, child) {
+        return MediaQuery(
+          // Ensure consistent text scaling
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
+          child: child!,
+        );
+      },
       routerConfig: goRouter,
     );
   }
