@@ -41,8 +41,23 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     if (kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Check immediately
         _checkUrlForSuccess();
         _updateSeo();
+        
+        // Also check after a short delay to handle cases where URL params load later
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && !_hasHandledPaymentRedirect) {
+            _checkUrlForSuccess();
+          }
+        });
+        
+        // Final check after 1 second for slow-loading scenarios
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted && !_hasHandledPaymentRedirect) {
+            _checkUrlForSuccess();
+          }
+        });
       });
     }
   }
@@ -88,12 +103,18 @@ class _AppShellState extends State<AppShell> {
     print('🔍 CHECKING URL FOR PAYMENT STATUS...');
     print('📍 Current URL: ${Uri.base.toString()}');
     print('🔎 Search params: ${Uri.base.query}');
+    print('🌐 Current path: ${Uri.base.path}');
 
     final params = _parseQueryParams();
     print('📋 Parsed params: $params');
 
-    final status = params['razorpay_payment_link_status'];
-    final paymentId = params['razorpay_payment_id'];
+    // Check for multiple possible payment status parameters
+    final status = params['razorpay_payment_link_status'] ?? 
+                   params['payment_status'] ?? 
+                   params['status'];
+    final paymentId = params['razorpay_payment_id'] ?? 
+                      params['payment_id'] ?? 
+                      params['payment_link_id'];
 
     print('💳 Payment status: $status');
     print('🆔 Payment ID: $paymentId');
@@ -106,7 +127,7 @@ class _AppShellState extends State<AppShell> {
     _hasHandledPaymentRedirect = true;
     _clearPaymentParams();
 
-    if (status == 'paid') {
+    if (status == 'paid' || status == 'success') {
       print("---------------------------------------");
       print("💰 STATUS: PAYMENT COMPLETED!");
       print("📄 RECEIPT ID: $paymentId");

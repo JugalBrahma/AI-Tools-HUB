@@ -24,14 +24,22 @@ class PaymentIntegrationService {
     print('🔍 DEBUG: Uri.base.toString() = ${currentUri.toString()}');
     print('🔍 DEBUG: Uri.base.queryParameters = ${currentUri.queryParameters}');
 
-    final cleanUri = currentUri.replace(
-      queryParameters: Map.from(currentUri.queryParameters)
-        ..remove('razorpay_payment_link_status')
-        ..remove('razorpay_payment_id')
-        ..remove('razorpay_payment_link_id')
-        ..remove('razorpay_signature'),
-    );
-    final callbackUrl = cleanUri.toString();
+    // For web, ensure we have a proper callback URL that works with path-based routing
+    String callbackUrl;
+    if (currentUri.hasEmptyPath) {
+      // If path is empty, add a trailing slash for proper routing
+      callbackUrl = '${currentUri.origin}/';
+    } else {
+      final cleanUri = currentUri.replace(
+        queryParameters: Map.from(currentUri.queryParameters)
+          ..remove('razorpay_payment_link_status')
+          ..remove('razorpay_payment_id')
+          ..remove('razorpay_payment_link_id')
+          ..remove('razorpay_signature'),
+      );
+      callbackUrl = cleanUri.toString();
+    }
+    
     print('🔍 DEBUG: callbackUrl = $callbackUrl');
 
     print('🚀 CALLING N8N: $_n8nWebhookUrl');

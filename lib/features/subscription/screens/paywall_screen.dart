@@ -115,7 +115,17 @@ class _PaywallScreenState extends State<PaywallScreen>
             ),
           );
         }
-        html.window.location.href = paymentUrl;
+        
+        // Try primary redirection method
+        try {
+          html.window.location.href = paymentUrl;
+        } catch (e) {
+          print('❌ Primary redirect failed: $e');
+          // Fallback: try opening in new tab for web
+          if (mounted) {
+            _showFallbackRedirectOption(paymentUrl);
+          }
+        }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -142,6 +152,117 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   void _openCheckout() {
     _openSpecificCheckout(_selectedPlan);
+  }
+
+  void _showFallbackRedirectOption(String paymentUrl) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF111118),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: const Color(0xFF4A89FF).withOpacity(0.2)),
+        ),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A89FF).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.open_in_new_rounded,
+                color: Color(0xFF4A89FF),
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Open Payment Page',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Click below to open the payment page in a new tab. Complete the payment and return here to activate your subscription.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.white54,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                paymentUrl,
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 11,
+                  color: const Color(0xFF00D4AA),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _isProcessing = false);
+            },
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                html.window.open(paymentUrl, '_blank');
+                setState(() => _isProcessing = false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A89FF),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Open Payment Page',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

@@ -4,6 +4,7 @@
 class window {
   static _Location location = _Location();
   static _History history = _History();
+  static void open(String url, String target) {}
 }
 
 class _Location {
