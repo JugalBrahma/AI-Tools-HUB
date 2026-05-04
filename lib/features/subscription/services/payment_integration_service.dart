@@ -20,7 +20,17 @@ class PaymentIntegrationService {
     required String purchaseDate,
     required String expiryDate,
   }) async {
-    final callbackUrl = html.window.location.origin;
+    // Preserve full URL context so users return to the same page after payment.
+    // Strip any existing Razorpay params to avoid nesting.
+    final currentUri = Uri.parse(html.window.location.href);
+    final cleanUri = currentUri.replace(
+      queryParameters: Map.from(currentUri.queryParameters)
+        ..remove('razorpay_payment_link_status')
+        ..remove('razorpay_payment_id')
+        ..remove('razorpay_payment_link_id')
+        ..remove('razorpay_signature'),
+    );
+    final callbackUrl = cleanUri.toString();
 
     print('🚀 CALLING N8N: $_n8nWebhookUrl');
     print(

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/features/home/widgets/top_nav_bar.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
@@ -26,6 +27,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final SeoService _seoService = SeoService();
+  bool _hasHandledPaymentRedirect = false;
 
   int get _currentIndex {
     final location = GoRouterState.of(context).uri.path;
@@ -58,9 +60,47 @@ class _AppShellState extends State<AppShell> {
     _seoService.updateStructuredData(path);
   }
 
+  Map<String, String> _parseQueryParams() {
+    final search = html.window.location.search;
+    if (search == null || search.isEmpty || search.length <= 1) return {};
+    final params = <String, String>{};
+    final pairs = search.substring(1).split('&');
+    for (final pair in pairs) {
+      final idx = pair.indexOf('=');
+      if (idx > 0) {
+        final key = Uri.decodeComponent(pair.substring(0, idx));
+        final value = Uri.decodeComponent(pair.substring(idx + 1));
+        params[key] = value;
+      } else if (pair.isNotEmpty) {
+        params[Uri.decodeComponent(pair)] = '';
+      }
+    }
+    return params;
+  }
+
+  void _clearPaymentParams() {
+    final uri = Uri.parse(html.window.location.href);
+    final clean = uri.replace(
+      queryParameters: {}..addAll(uri.queryParameters)
+        ..remove('razorpay_payment_link_status')
+        ..remove('razorpay_payment_id')
+        ..remove('razorpay_payment_link_id')
+        ..remove('razorpay_signature'),
+    );
+    html.window.history.replaceState(null, '', clean.toString());
+  }
+
   void _checkUrlForSuccess() {
-    final status = Uri.base.queryParameters['razorpay_payment_link_status'];
-    final paymentId = Uri.base.queryParameters['razorpay_payment_id'];
+    if (_hasHandledPaymentRedirect) return;
+
+    final params = _parseQueryParams();
+    final status = params['razorpay_payment_link_status'];
+    final paymentId = params['razorpay_payment_id'];
+
+    if (status == null || status.isEmpty) return;
+
+    _hasHandledPaymentRedirect = true;
+    _clearPaymentParams();
 
     if (status == 'paid') {
       print("---------------------------------------");
@@ -68,17 +108,60 @@ class _AppShellState extends State<AppShell> {
       print("📄 RECEIPT ID: $paymentId");
       print("---------------------------------------");
 
-      _unlockSubscription(paymentId);
-      _showSuccessDialog(paymentId ?? 'N/A');
+      _unlockSubscriptionAndShowDialog(paymentId);
+    } else if (status == 'failed') {
+      print("---------------------------------------");
+      print("❌ STATUS: PAYMENT FAILED");
+      print("---------------------------------------");
+      _showPaymentFeedback(
+        title: 'Payment Failed',
+        message: 'Your payment could not be processed. Please try again.',
+        icon: Icons.error_outline_rounded,
+        iconColor: Colors.redAccent,
+      );
+    } else {
+      print("---------------------------------------");
+      print("⏹️ STATUS: PAYMENT $status");
+      print("---------------------------------------");
+      _showPaymentFeedback(
+        title: 'Payment Cancelled',
+        message: 'You cancelled the payment. No charges were made.',
+        icon: Icons.cancel_outlined,
+        iconColor: Colors.white54,
+      );
     }
   }
 
-  Future<void> _unlockSubscription(String? paymentId) async {
+  void _unlockSubscriptionAndShowDialog(String? paymentId) async {
     final auth = context.read<app_auth.AuthProvider>();
-    final user = auth.currentUser;
+
+    // Wait for Firebase Auth to restore session after page reload.
+    User? user = auth.currentUser;
+    if (user == null) {
+      print('⏳ Waiting for auth session to restore...');
+      try {
+        user = await auth.authStateChanges.firstWhere((u) => u != null).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            print('⏱️ Auth session restore timed out');
+            return null;
+          },
+        );
+      } catch (e) {
+        print('❌ Error waiting for auth: $e');
+      }
+    }
 
     if (user == null) {
       print('⚠️ No user logged in, cannot unlock subscription');
+      if (mounted) {
+        _showPaymentFeedback(
+          title: 'Login Required',
+          message: 'Please sign in to activate your subscription.',
+          icon: Icons.person_outline_rounded,
+          iconColor: const Color(0xFF4A89FF),
+        );
+      }
       return;
     }
 
@@ -100,6 +183,84 @@ class _AppShellState extends State<AppShell> {
     } catch (e) {
       print('❌ Failed to unlock subscription: $e');
     }
+
+    if (mounted) {
+      _showSuccessDialog(paymentId ?? 'N/A');
+    }
+  }
+
+  void _showPaymentFeedback({
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF111118),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: iconColor.withOpacity(0.2)),
+        ),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 48),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: Colors.white54,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A89FF),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Got it',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSuccessDialog(String paymentId) {
@@ -185,8 +346,6 @@ class _AppShellState extends State<AppShell> {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Clear URL parameters to prevent dialog from reappearing
-                html.window.history.replaceState(null, '', '/');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4A89FF),

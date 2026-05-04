@@ -9,6 +9,7 @@ class window {
 class _Location {
   String href = '';
   String get origin => '';
+  String? get search => '';
 }
 
 class _History {
