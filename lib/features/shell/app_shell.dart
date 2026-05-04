@@ -83,14 +83,20 @@ class _AppShellState extends State<AppShell> {
     }
 
     try {
+      // Calculate expiry date (30 days from now for Pro)
+      final expiryDate = DateTime.now().toUtc().add(const Duration(days: 30));
+
       // Update Firestore to unlock subscription
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'is_pro': true,
         'status': 'pro',
+        'plan': 'pro',
         'payment_id': paymentId,
+        'expiry_date': Timestamp.fromDate(expiryDate),
         'updated_at': FieldValue.serverTimestamp(),
       });
       print('✅ Subscription unlocked for user: ${user.uid}');
+      print('📅 Expiry date: $expiryDate');
     } catch (e) {
       print('❌ Failed to unlock subscription: $e');
     }
