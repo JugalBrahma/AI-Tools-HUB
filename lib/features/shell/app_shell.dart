@@ -93,11 +93,23 @@ class _AppShellState extends State<AppShell> {
   void _checkUrlForSuccess() {
     if (_hasHandledPaymentRedirect) return;
 
+    print('🔍 CHECKING URL FOR PAYMENT STATUS...');
+    print('📍 Current URL: ${html.window.location.href}');
+    print('🔎 Search params: ${html.window.location.search}');
+
     final params = _parseQueryParams();
+    print('📋 Parsed params: $params');
+
     final status = params['razorpay_payment_link_status'];
     final paymentId = params['razorpay_payment_id'];
 
-    if (status == null || status.isEmpty) return;
+    print('💳 Payment status: $status');
+    print('🆔 Payment ID: $paymentId');
+
+    if (status == null || status.isEmpty) {
+      print('⏭️ No payment status found, skipping');
+      return;
+    }
 
     _hasHandledPaymentRedirect = true;
     _clearPaymentParams();
