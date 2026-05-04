@@ -7,11 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/features/home/widgets/top_nav_bar.dart';
 import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/core/providers/pinned_tools_provider.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
+import 'package:toolshub/core/services/seo_service.dart';
 
 
 class AppShell extends StatefulWidget {
@@ -24,6 +26,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final SeoService _seoService = SeoService();
 
   int get _currentIndex {
     final location = GoRouterState.of(context).uri.path;
@@ -38,8 +41,22 @@ class _AppShellState extends State<AppShell> {
     if (kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkUrlForSuccess();
+        _updateSeo();
       });
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (kIsWeb) {
+      _updateSeo();
+    }
+  }
+
+  void _updateSeo() {
+    final path = GoRouterState.of(context).uri.path;
+    _seoService.updateStructuredData(path);
   }
 
   void _checkUrlForSuccess() {
@@ -52,7 +69,31 @@ class _AppShellState extends State<AppShell> {
       print("📄 RECEIPT ID: $paymentId");
       print("---------------------------------------");
 
+      _unlockSubscription(paymentId);
       _showSuccessDialog(paymentId ?? 'N/A');
+    }
+  }
+
+  Future<void> _unlockSubscription(String? paymentId) async {
+    final auth = context.read<app_auth.AuthProvider>();
+    final user = auth.currentUser;
+
+    if (user == null) {
+      print('⚠️ No user logged in, cannot unlock subscription');
+      return;
+    }
+
+    try {
+      // Update Firestore to unlock subscription
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'is_pro': true,
+        'status': 'pro',
+        'payment_id': paymentId,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      print('✅ Subscription unlocked for user: ${user.uid}');
+    } catch (e) {
+      print('❌ Failed to unlock subscription: $e');
     }
   }
 

@@ -14,3 +14,21 @@ class _Location {
 class _History {
   void replaceState(dynamic data, String title, String? url) {}
 }
+
+class document {
+  static List<NodeList> querySelectorAll(String selectors) => [];
+  static _Head head = _Head();
+}
+
+class _Head {
+  void append(ScriptElement element) {}
+}
+
+class NodeList {
+  void remove() {}
+}
+
+class ScriptElement {
+  String type = '';
+  String text = '';
+}
