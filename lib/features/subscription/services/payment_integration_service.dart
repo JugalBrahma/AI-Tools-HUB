@@ -20,6 +20,10 @@ class PaymentIntegrationService {
     // Preserve full URL context so users return to the same page after payment.
     // Strip any existing Razorpay params to avoid nesting.
     final currentUri = Uri.base;
+    print('🔍 DEBUG: Uri.base = $currentUri');
+    print('🔍 DEBUG: Uri.base.toString() = ${currentUri.toString()}');
+    print('🔍 DEBUG: Uri.base.queryParameters = ${currentUri.queryParameters}');
+
     final cleanUri = currentUri.replace(
       queryParameters: Map.from(currentUri.queryParameters)
         ..remove('razorpay_payment_link_status')
@@ -28,6 +32,7 @@ class PaymentIntegrationService {
         ..remove('razorpay_signature'),
     );
     final callbackUrl = cleanUri.toString();
+    print('🔍 DEBUG: callbackUrl = $callbackUrl');
 
     print('🚀 CALLING N8N: $_n8nWebhookUrl');
     print(
