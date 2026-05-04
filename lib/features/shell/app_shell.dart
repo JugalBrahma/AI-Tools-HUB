@@ -61,25 +61,16 @@ class _AppShellState extends State<AppShell> {
   }
 
   Map<String, String> _parseQueryParams() {
-    final search = html.window.location.search;
-    if (search == null || search.isEmpty || search.length <= 1) return {};
+    final uri = Uri.base;
     final params = <String, String>{};
-    final pairs = search.substring(1).split('&');
-    for (final pair in pairs) {
-      final idx = pair.indexOf('=');
-      if (idx > 0) {
-        final key = Uri.decodeComponent(pair.substring(0, idx));
-        final value = Uri.decodeComponent(pair.substring(idx + 1));
-        params[key] = value;
-      } else if (pair.isNotEmpty) {
-        params[Uri.decodeComponent(pair)] = '';
-      }
-    }
+    uri.queryParameters.forEach((key, value) {
+      params[key] = value;
+    });
     return params;
   }
 
   void _clearPaymentParams() {
-    final uri = Uri.parse(html.window.location.href);
+    final uri = Uri.base;
     final clean = uri.replace(
       queryParameters: {}..addAll(uri.queryParameters)
         ..remove('razorpay_payment_link_status')
@@ -87,6 +78,7 @@ class _AppShellState extends State<AppShell> {
         ..remove('razorpay_payment_link_id')
         ..remove('razorpay_signature'),
     );
+    // Use html.window.history.replaceState to update URL without reload
     html.window.history.replaceState(null, '', clean.toString());
   }
 
@@ -94,8 +86,8 @@ class _AppShellState extends State<AppShell> {
     if (_hasHandledPaymentRedirect) return;
 
     print('🔍 CHECKING URL FOR PAYMENT STATUS...');
-    print('📍 Current URL: ${html.window.location.href}');
-    print('🔎 Search params: ${html.window.location.search}');
+    print('📍 Current URL: ${Uri.base.toString()}');
+    print('🔎 Search params: ${Uri.base.query}');
 
     final params = _parseQueryParams();
     print('📋 Parsed params: $params');

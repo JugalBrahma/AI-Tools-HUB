@@ -1,9 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:toolshub/core/config/api_constants.dart';
-import 'package:toolshub/core/utils/html_stub.dart'
-    if (dart.library.html) 'dart:html'
-    as html;
 
 class PaymentIntegrationService {
   static String get _n8nWebhookUrl => ApiConstants.paymentWebhookUrl;
@@ -22,7 +19,7 @@ class PaymentIntegrationService {
   }) async {
     // Preserve full URL context so users return to the same page after payment.
     // Strip any existing Razorpay params to avoid nesting.
-    final currentUri = Uri.parse(html.window.location.href);
+    final currentUri = Uri.base;
     final cleanUri = currentUri.replace(
       queryParameters: Map.from(currentUri.queryParameters)
         ..remove('razorpay_payment_link_status')
