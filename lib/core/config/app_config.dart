@@ -9,6 +9,8 @@ class AppConfig {
 
   static String get n8nApiKey => dotenv.env['N8N_API_KEY'] ?? '';
 
+  static String get razorpayKeyId => dotenv.env['RAZORPAY_KEY_ID'] ?? '';
+
   /// Initialize the configuration (load .env)
   static Future<void> init() async {
     await dotenv.load(fileName: ".env");

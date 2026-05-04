@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:toolshub/core/providers/auth_provider.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
+import 'package:toolshub/core/config/app_config.dart';
 import 'package:toolshub/features/subscription/models/price_plan.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11,8 +12,6 @@ import 'package:toolshub/features/subscription/models/price_plan.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class RazorpayCheckoutService {
-  static const String _razorpayKeyId = 'rzp_test_YOUR_KEY_HERE'; // ← replace
-
   final Razorpay _razorpay = Razorpay();
 
   void init({
@@ -32,8 +31,15 @@ class RazorpayCheckoutService {
     required String userEmail,
     required String userName,
   }) {
+    final razorpayKeyId = AppConfig.razorpayKeyId;
+    
+    if (razorpayKeyId.isEmpty || razorpayKeyId == 'rzp_test_YOUR_KEY_HERE') {
+      debugPrint('❌ Razorpay key not configured. Please set RAZORPAY_KEY_ID in .env');
+      return;
+    }
+
     final options = <String, dynamic>{
-      'key': _razorpayKeyId,
+      'key': razorpayKeyId,
       'amount': plan.amountSmallest,
       'currency': plan.currency,
       'name': 'AI Tools Hub',
