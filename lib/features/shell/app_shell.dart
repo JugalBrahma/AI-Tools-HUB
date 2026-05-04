@@ -271,7 +271,7 @@ class _AppShellState extends State<AppShell> {
                       : _buildLoginPrompt(context),
                 ),
 
-                if (!auth.isPro) ...[
+                if (!auth.isPro || (auth.plan == 'trial' && auth.status == 'expired')) ...[
                   const SizedBox(height: 24),
                   _buildUpgradeBanner(context),
                 ],
@@ -316,14 +316,14 @@ class _AppShellState extends State<AppShell> {
                   Icons.stars_rounded,
                   -2,
                   color: const Color(0xFFFFD700),
-                  badge: (auth.isPro || auth.status == 'trial')
+                  badge: ((auth.isPro && auth.status == 'pro') || (auth.plan == 'trial' && auth.status == 'trial'))
                       ? _buildStatusBadge(auth)
                       : null,
                 ),
-                if (auth.isLoggedIn && auth.expiryDate != null)
+                if (auth.isLoggedIn && auth.expiryDate != null && auth.status != 'expired')
                   _MembershipExpiryInfo(auth: auth),
 
-                if (auth.isPro) ...[
+                if (auth.isPro && auth.status == 'pro') ...[
                   const SizedBox(height: 8),
                   _buildDrawerSectionHeader('SUPPORT'),
                   _buildDrawerLink(
@@ -402,7 +402,7 @@ class _AppShellState extends State<AppShell> {
                 ),
               ),
             ),
-            if (auth.isPro)
+            if (auth.isPro && auth.status == 'pro')
               Positioned(
                 right: -2,
                 top: -2,
@@ -435,7 +435,7 @@ class _AppShellState extends State<AppShell> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (auth.isPro || auth.status == 'trial') ...[
+                  if ((auth.isPro && auth.status == 'pro') || (auth.plan == 'trial' && auth.status == 'trial')) ...[
                     const SizedBox(width: 6),
                     _buildStatusBadge(auth),
                   ],
@@ -874,6 +874,7 @@ class _MembershipExpiryInfoState extends State<_MembershipExpiryInfo> {
   @override
   Widget build(BuildContext context) {
     if (widget.auth.expiryDate == null) return const SizedBox.shrink();
+    if (widget.auth.status == 'expired') return const SizedBox.shrink();
 
     final remaining = widget.auth.expiryDate!.difference(DateTime.now());
     if (remaining.isNegative) return const SizedBox.shrink();

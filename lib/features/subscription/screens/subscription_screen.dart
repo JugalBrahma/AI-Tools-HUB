@@ -136,9 +136,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Widget _buildPricingCards() {
     final auth = context.watch<AuthProvider>();
-    final isTrial = auth.plan == 'trial' || auth.status == 'trial';
-    final isPro = auth.isPro && !isTrial;
-    final hasActivePlan = auth.isPro || isTrial;
+    final isTrial = auth.plan == 'trial' && auth.status == 'trial';
+    final isPro = auth.isPro && auth.status == 'pro';
+    final hasActivePlan = isPro || isTrial;
     final isFree = !hasActivePlan;
 
     final isIndia = _activePlan.isIndia;

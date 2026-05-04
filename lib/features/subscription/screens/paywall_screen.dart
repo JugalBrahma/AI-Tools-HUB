@@ -441,8 +441,9 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   Widget _buildSubscribeButton() {
     final auth = context.watch<AuthProvider>();
-    final hasActivePlan =
-        auth.isPro || auth.plan == 'trial' || auth.status == 'trial';
+    final isTrial = auth.plan == 'trial' && auth.status == 'trial';
+    final isPro = auth.isPro && auth.status == 'pro';
+    final hasActivePlan = isPro || isTrial;
 
     return Center(
       child: SizedBox(
