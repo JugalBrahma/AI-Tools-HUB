@@ -199,7 +199,7 @@ class SeoService {
     final script = html.ScriptElement();
     script.type = 'application/ld+json';
     script.text = _jsonEncode(data);
-    html.document.head.append(script);
+    html.document.head?.append(script);
   }
 
   /// Simple JSON encoder (avoiding dart:convert for minimal dependencies)

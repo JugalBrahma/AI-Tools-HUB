@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/features/home/widgets/top_nav_bar.dart';
-import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/core/providers/pinned_tools_provider.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';

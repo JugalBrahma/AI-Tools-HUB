@@ -17,7 +17,7 @@ class _History {
 
 class document {
   static List<NodeList> querySelectorAll(String selectors) => [];
-  static _Head head = _Head();
+  static _Head? head = _Head();
 }
 
 class _Head {
