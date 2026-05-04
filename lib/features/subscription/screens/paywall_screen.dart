@@ -1,68 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:toolshub/core/providers/auth_provider.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
-import 'package:toolshub/core/config/app_config.dart';
 import 'package:toolshub/features/subscription/models/price_plan.dart';
+import 'package:toolshub/features/subscription/services/payment_integration_service.dart';
+import 'package:toolshub/core/utils/html_stub.dart'
+    if (dart.library.html) 'dart:html'
+    as html;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RazorpayCheckoutService — keeps checkout logic away from widgets
-// ─────────────────────────────────────────────────────────────────────────────
-
-class RazorpayCheckoutService {
-  final Razorpay _razorpay = Razorpay();
-
-  void init({
-    required Function(PaymentSuccessResponse) onSuccess,
-    required Function(PaymentFailureResponse) onFailure,
-    required Function(ExternalWalletResponse) onWallet,
-  }) {
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, onSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, onFailure);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, onWallet);
-  }
-
-  /// Opens the Razorpay checkout with the given plan and user details.
-  void openCheckout({
-    required PricePlan plan,
-    required String uid,
-    required String userEmail,
-    required String userName,
-  }) {
-    final razorpayKeyId = AppConfig.razorpayKeyId;
-    
-    if (razorpayKeyId.isEmpty || razorpayKeyId == 'rzp_test_YOUR_KEY_HERE') {
-      debugPrint('❌ Razorpay key not configured. Please set RAZORPAY_KEY_ID in .env');
-      return;
-    }
-
-    final options = <String, dynamic>{
-      'key': razorpayKeyId,
-      'amount': plan.amountSmallest,
-      'currency': plan.currency,
-      'name': 'AI Tools Hub',
-      'description': 'Pro Subscription',
-      'prefill': {'email': userEmail, 'contact': '', 'name': userName},
-      'notes': {
-        'uid': uid, // used to update Firestore after payment
-        'plan': plan.tier.name,
-        'currency': plan.currency,
-      },
-      'theme': {'color': '#4A89FF'},
-      'modal': {'ondismiss': true},
-    };
-
-    try {
-      _razorpay.open(options);
-    } catch (e) {
-      debugPrint('❌ Razorpay open error: $e');
-    }
-  }
-
-  void dispose() => _razorpay.clear();
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PaywallScreen
@@ -80,7 +26,6 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen>
     with SingleTickerProviderStateMixin {
   late PricePlan _selectedPlan;
-  final RazorpayCheckoutService _checkoutService = RazorpayCheckoutService();
   late AnimationController _priceAnimController;
   late Animation<double> _priceAnim;
   bool _isProcessing = false;
@@ -99,12 +44,6 @@ class _PaywallScreenState extends State<PaywallScreen>
       curve: Curves.easeOut,
     );
     _priceAnimController.forward();
-
-    _checkoutService.init(
-      onSuccess: _handlePaymentSuccess,
-      onFailure: _handlePaymentFailure,
-      onWallet: _handleExternalWallet,
-    );
   }
 
   // ── Locale detection ───────────────────────────────────────────────────────
@@ -132,7 +71,7 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   // ── Checkout ───────────────────────────────────────────────────────────────
 
-  void _openSpecificCheckout(PricePlan plan) {
+  void _openSpecificCheckout(PricePlan plan) async {
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
 
@@ -143,59 +82,70 @@ class _PaywallScreenState extends State<PaywallScreen>
 
     setState(() => _isProcessing = true);
 
-    _checkoutService.openCheckout(
-      plan: plan,
-      uid: user.uid,
-      userEmail: user.email ?? '',
-      userName: user.displayName ?? 'User',
-    );
+    try {
+      final planDays = 30; // Pro plan is 30 days
+      final purchaseDate = DateTime.now().toUtc().toIso8601String();
+      final expiryDate = DateTime.now()
+          .toUtc()
+          .add(Duration(days: planDays))
+          .toIso8601String();
+
+      final responseData = await PaymentIntegrationService.sendPaymentDataToN8N(
+        uid: user.uid,
+        userEmail: user.email ?? '',
+        amountPaise: plan.amountSmallest,
+        plan: plan.tier.name,
+        currency: plan.currency,
+        planDays: planDays,
+        purchaseDate: purchaseDate,
+        expiryDate: expiryDate,
+      );
+
+      final paymentUrl =
+          responseData?['short_url'] ?? responseData?['payment_url'];
+      final status = responseData?['status']?.toString().toLowerCase();
+      final isSuccess = status == 'success' || status == 'created';
+
+      if (paymentUrl != null && isSuccess) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Redirecting to payment gateway...'),
+              backgroundColor: Color(0xFF00D4AA),
+            ),
+          );
+        }
+        html.window.location.href = paymentUrl;
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Payment initiation failed. Please try again.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        setState(() => _isProcessing = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      setState(() => _isProcessing = false);
+    }
   }
 
   void _openCheckout() {
     _openSpecificCheckout(_selectedPlan);
   }
 
-  // ── Razorpay callbacks ─────────────────────────────────────────────────────
-
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    setState(() => _isProcessing = false);
-    debugPrint('✅ Payment success: ${response.paymentId}');
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment successful! ID: ${response.paymentId}'),
-          backgroundColor: const Color(0xFF00D4AA),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      widget.onDismiss();
-    }
-  }
-
-  void _handlePaymentFailure(PaymentFailureResponse response) {
-    setState(() => _isProcessing = false);
-    debugPrint('❌ Payment failed: ${response.message}');
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            response.message ?? 'Payment failed. Please try again.',
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    setState(() => _isProcessing = false);
-    debugPrint('💳 External wallet: ${response.walletName}');
-  }
-
   @override
   void dispose() {
-    _checkoutService.dispose();
     _priceAnimController.dispose();
     super.dispose();
   }
