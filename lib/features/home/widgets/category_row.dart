@@ -61,19 +61,39 @@ class CategoryRow extends StatelessWidget {
       allTools.addAll(cat.tools);
     }
 
-    // Only show tools that have a logo URL
-    final logoTools = allTools.where((t) => t.logo.trim().isNotEmpty).toList();
+    // Try to get tools with logos first
+    List<ToolInfo> displayTools = allTools.where((t) => t.logo.trim().isNotEmpty).toList();
 
-    if (logoTools.isEmpty && provider.isLoading) {
-      return const SizedBox(
-        height: 72,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    } else if (logoTools.isEmpty) {
-      return const SizedBox(height: 72);
+    // Fallback to all tools if none have explicit logos (LogoWidget handles local asset matching)
+    if (displayTools.isEmpty && allTools.isNotEmpty) {
+      displayTools = allTools;
     }
 
-    final topRanked = _rankPopularByList(logoTools, _topPreferredNames);
+    if (displayTools.isEmpty) {
+      if (provider.isLoading) {
+        return const SizedBox(
+          height: 72,
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+      
+      // If DB is entirely empty, generate static mock tools so marquee isn't blank
+      displayTools = _topPreferredNames.map((name) => ToolInfo(
+        docId: name,
+        name: name,
+        description: '',
+        logo: '',
+        url: '',
+        category: '',
+        pricing: '',
+        accentColor: Colors.grey,
+        logoGradient: const [Colors.grey, Colors.black],
+        searchName: name,
+        searchDescription: '',
+      )).toList();
+    }
+
+    final topRanked = _rankPopularByList(displayTools, _topPreferredNames);
     final top12 = topRanked.take(12).toList();
     final bottom12 = topRanked.skip(12).take(12).toList();
 
