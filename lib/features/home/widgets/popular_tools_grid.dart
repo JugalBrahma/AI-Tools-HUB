@@ -24,10 +24,95 @@ class PopularToolsGrid extends StatelessWidget {
     'suno',
   ];
 
+  // Static fallback tools — shown when Firestore data hasn't loaded yet.
+  static final List<ToolInfo> _staticTools = [
+    ToolInfo(
+      docId: 'chatgpt',
+      name: 'ChatGPT',
+      description: 'The world\'s most popular AI assistant for chat, writing, coding, and analysis.',
+      logo: 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chat.openai.com&size=128',
+      url: 'https://chat.openai.com',
+      category: 'AI Chat',
+      pricing: 'Freemium',
+      accentColor: const Color(0xFF10A37F),
+      logoGradient: const [Color(0xFF10A37F), Color(0xFF0A7A5F)],
+      searchName: 'chatgpt',
+      searchDescription: 'ai assistant chat writing coding analysis',
+    ),
+    ToolInfo(
+      docId: 'claude',
+      name: 'Claude',
+      description: 'Anthropic\'s powerful AI assistant known for thoughtful, nuanced responses.',
+      logo: 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://claude.ai&size=128',
+      url: 'https://claude.ai',
+      category: 'AI Chat',
+      pricing: 'Freemium',
+      accentColor: const Color(0xFFD97706),
+      logoGradient: const [Color(0xFFD97706), Color(0xFFB45309)],
+      searchName: 'claude',
+      searchDescription: 'ai assistant anthropic thoughtful nuanced',
+    ),
+    ToolInfo(
+      docId: 'midjourney',
+      name: 'Midjourney',
+      description: 'Generate stunning, photorealistic AI art and images from text prompts.',
+      logo: 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://midjourney.com&size=128',
+      url: 'https://midjourney.com',
+      category: 'Image Gen',
+      pricing: 'Paid',
+      accentColor: const Color(0xFF7C3AED),
+      logoGradient: const [Color(0xFF7C3AED), Color(0xFF5B21B6)],
+      searchName: 'midjourney',
+      searchDescription: 'ai art image generation photorealistic',
+    ),
+    ToolInfo(
+      docId: 'cursor',
+      name: 'Cursor',
+      description: 'The AI-first code editor that lets you write, edit, and debug with natural language.',
+      logo: 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://cursor.sh&size=128',
+      url: 'https://cursor.sh',
+      category: 'Coding',
+      pricing: 'Freemium',
+      accentColor: const Color(0xFF4A89FF),
+      logoGradient: const [Color(0xFF4A89FF), Color(0xFF2563EB)],
+      searchName: 'cursor',
+      searchDescription: 'ai code editor coding development',
+    ),
+    ToolInfo(
+      docId: 'runway',
+      name: 'Runway',
+      description: 'Next-generation AI video generation and creative tools for filmmakers.',
+      logo: 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://runwayml.com&size=128',
+      url: 'https://runwayml.com',
+      category: 'Video Gen',
+      pricing: 'Freemium',
+      accentColor: const Color(0xFFEC4899),
+      logoGradient: const [Color(0xFFEC4899), Color(0xFFBE185D)],
+      searchName: 'runway',
+      searchDescription: 'ai video generation filmmaking creative',
+    ),
+    ToolInfo(
+      docId: 'elevenlabs',
+      name: 'ElevenLabs',
+      description: 'Ultra-realistic AI voice synthesis and cloning platform used by top creators.',
+      logo: 'https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://elevenlabs.io&size=128',
+      url: 'https://elevenlabs.io',
+      category: 'Voice Gen',
+      pricing: 'Freemium',
+      accentColor: const Color(0xFF00D4AA),
+      logoGradient: const [Color(0xFF00D4AA), Color(0xFF0099CC)],
+      searchName: 'elevenlabs',
+      searchDescription: 'ai voice synthesis cloning text to speech',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final toolProvider = context.watch<ToolProvider>();
-    final featuredTools = _selectFeaturedTools(toolProvider.categories);
+    final liveTools = _selectFeaturedTools(toolProvider.categories);
+
+    // Use live Firestore tools if available, otherwise fall back to static data.
+    final featuredTools = liveTools.isNotEmpty ? liveTools : _staticTools;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -62,7 +147,7 @@ class PopularToolsGrid extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              'ESSENTIAL_STACK',
+                              'POPULAR TOOLS',
                               style: GoogleFonts.ibmPlexMono(
                                 fontSize: 8,
                                 fontWeight: FontWeight.w700,

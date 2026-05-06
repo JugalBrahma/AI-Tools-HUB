@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 class ScrollReveal extends StatefulWidget {
   final Widget child;
-  final double delay;
+  final double delay; // seconds
 
   const ScrollReveal({
     super.key,
@@ -16,57 +14,78 @@ class ScrollReveal extends StatefulWidget {
   State<ScrollReveal> createState() => _ScrollRevealState();
 }
 
-class _ScrollRevealState extends State<ScrollReveal> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-  late Animation<Offset> _slide;
-  bool _isVisible = false;
+class _ScrollRevealState extends State<ScrollReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  late final Animation<double> _translateY;
+
+  ScrollPosition? _scrollPosition;
+  bool _triggered = false;
 
   @override
   void initState() {
     super.initState();
 
-    // On web, fire visibility updates with a small delay to prevent frame drops
-    if (kIsWeb) {
-      VisibilityDetectorController.instance.updateInterval = const Duration(milliseconds: 150);
-    }
-
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 650),
     );
 
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+
+    _translateY = Tween<double>(begin: 36.0, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart),
     );
 
-    _slide = Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeOutQuart),
-      ),
-    );
+    // Check visibility after first layout (catches items already on screen).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVisibility());
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Force a visibility check after layout to catch initially visible items
-      if (mounted && !_isVisible) {
-        VisibilityDetectorController.instance.notifyNow();
-      }
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Attach to the nearest Scrollable's position so we re-check on every scroll event.
+    final newPosition = Scrollable.maybeOf(context)?.position;
+    if (newPosition != _scrollPosition) {
+      _scrollPosition?.removeListener(_checkVisibility);
+      _scrollPosition = newPosition;
+      _scrollPosition?.addListener(_checkVisibility);
+    }
   }
 
   @override
   void dispose() {
+    _scrollPosition?.removeListener(_checkVisibility);
     _controller.dispose();
     super.dispose();
   }
 
-  void _onVisibilityChanged(VisibilityInfo info) {
-    // Lower threshold to 5% so partially visible items trigger faster on web
-    if (info.visibleFraction > 0.05 && !_isVisible) {
-      if (mounted) {
-        setState(() => _isVisible = true);
-        Future.delayed(Duration(milliseconds: (widget.delay * 1000).toInt()), () {
+  void _checkVisibility() {
+    if (_triggered || !mounted) return;
+
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+
+    // Use global (screen) coordinates — works regardless of scroll nesting.
+    final globalPosition = box.localToGlobal(Offset.zero);
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
+    // Widget is visible if any part of it overlaps the screen viewport.
+    final isVisible = globalPosition.dy < screenHeight &&
+        globalPosition.dy + box.size.height > 0;
+
+    if (isVisible) {
+      _triggered = true;
+      // Detach scroll listener — no longer needed after trigger.
+      _scrollPosition?.removeListener(_checkVisibility);
+
+      final delayMs = (widget.delay * 1000).toInt();
+      if (delayMs == 0) {
+        _controller.forward();
+      } else {
+        Future.delayed(Duration(milliseconds: delayMs), () {
           if (mounted) _controller.forward();
         });
       }
@@ -75,22 +94,16 @@ class _ScrollRevealState extends State<ScrollReveal> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return VisibilityDetector(
-      key: Key('scroll_reveal_${identityHashCode(widget)}_${widget.child.runtimeType}'),
-      onVisibilityChanged: _onVisibilityChanged,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Opacity(
-            opacity: _opacity.value,
-            child: Transform.translate(
-              offset: _slide.value * 100.0,
-              child: child,
-            ),
-          );
-        },
-        child: widget.child,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) => Opacity(
+        opacity: _opacity.value,
+        child: Transform.translate(
+          offset: Offset(0, _translateY.value),
+          child: child,
+        ),
       ),
+      child: widget.child,
     );
   }
 }
