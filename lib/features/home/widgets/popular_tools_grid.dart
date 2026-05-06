@@ -41,48 +41,50 @@ class PopularToolsGrid extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00FFD1).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFF00FFD1).withOpacity(0.2),
+                ScrollReveal(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00FFD1).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF00FFD1).withOpacity(0.2),
+                              ),
+                            ),
+                            child: Text(
+                              'ESSENTIAL_STACK',
+                              style: GoogleFonts.ibmPlexMono(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF00FFD1),
+                                letterSpacing: 2.0,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            'ESSENTIAL_STACK',
-                            style: GoogleFonts.ibmPlexMono(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF00FFD1),
-                              letterSpacing: 2.0,
+                          const SizedBox(height: 12),
+                          Text(
+                            'Industry Leading Tools',
+                            style: GoogleFonts.inter(
+                              fontSize: width < 600 ? 28 : 40,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -1.5,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Industry Leading Tools',
-                          style: GoogleFonts.inter(
-                            fontSize: width < 600 ? 28 : 40,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: width < 600 ? 32 : 64),
 

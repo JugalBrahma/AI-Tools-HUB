@@ -47,21 +47,12 @@ class _ScrollRevealState extends State<ScrollReveal> with SingleTickerProviderSt
       ),
     );
 
-    // Web fallback: if VisibilityDetector never fires (widget already in viewport),
-    // auto-reveal after a short delay so images don't stay invisible
-    if (kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(
-          Duration(milliseconds: 300 + (widget.delay * 1000).toInt()),
-          () {
-            if (mounted && !_isVisible) {
-              setState(() => _isVisible = true);
-              _controller.forward();
-            }
-          },
-        );
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Force a visibility check after layout to catch initially visible items
+      if (mounted && !_isVisible) {
+        VisibilityDetectorController.instance.notifyNow();
+      }
+    });
   }
 
   @override
