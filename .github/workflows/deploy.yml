@@ -30,12 +30,15 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release --wasm
 
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Link Vercel Project
+        run: |
+          mkdir -p .vercel
+          echo '{"orgId":"${{ secrets.VERCEL_ORG_ID }}","projectId":"${{ secrets.VERCEL_PROJECT_ID }}"}' > .vercel/project.json
+        working-directory: ./build/web
+
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-version: latest
-          working-directory: ./build/web
-          vercel-args: '--prod'
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: ./build/web
