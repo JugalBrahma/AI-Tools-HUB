@@ -11,13 +11,77 @@ class SeoService {
 
   static const String _baseUrl = 'https://www.aiworkx.space';
 
+  /// Updates document title and meta tags for the current route (web).
+  void updatePageMeta(String path) {
+    final normalized = path.isEmpty ? '/' : path;
+    final meta = _metaForPath(normalized);
+    html.document.title = meta.title;
+    _setMetaContent('description', meta.description);
+    _setMetaContent('og:title', meta.title, isProperty: true);
+    _setMetaContent('og:description', meta.description, isProperty: true);
+    _setMetaContent('og:url', meta.canonical, isProperty: true);
+    _setMetaContent('twitter:title', meta.title);
+    _setMetaContent('twitter:description', meta.description);
+    _setLinkHref('canonical', meta.canonical);
+  }
+
+  void _setMetaContent(String name, String content, {bool isProperty = false}) {
+    final selector = isProperty
+        ? 'meta[property="$name"]'
+        : 'meta[name="$name"]';
+    final element = html.document.querySelector(selector);
+    element?.setAttribute('content', content);
+  }
+
+  void _setLinkHref(String rel, String href) {
+    html.document.querySelector('link[rel="$rel"]')?.setAttribute('href', href);
+  }
+
+  ({String title, String description, String canonical}) _metaForPath(String path) {
+    switch (path) {
+      case '/trending':
+        return (
+          title: 'Trending AI Tools — Live Leaderboard | AI Tools Hub',
+          description:
+              'Real-time leaderboard of trending AI tools for coding, image, video, and writing. Updated daily.',
+          canonical: '$_baseUrl/trending',
+        );
+      case '/assistant':
+        return (
+          title: 'AI Stack Assistant — Personalized Tool Recommendations',
+          description:
+              'Describe your goals and get personalized AI tool stack recommendations for coding, design, and content.',
+          canonical: '$_baseUrl/assistant',
+        );
+      case '/bookmarks':
+        return (
+          title: 'Saved AI Tools — Your Bookmarks | AI Tools Hub',
+          description:
+              'Save and organize AI tools from the directory. Sign in to sync bookmarks across devices.',
+          canonical: '$_baseUrl/bookmarks',
+        );
+      case '/':
+      default:
+        return (
+          title: 'AI Tools Hub — The Ultimate AI Tool Directory',
+          description:
+              'Find the best AI tools for coding, image generation, video production, and writing. The most comprehensive AI directory updated daily.',
+          canonical: '$_baseUrl/',
+        );
+    }
+  }
+
   /// Update structured data based on current route
   void updateStructuredData(String path) {
+    updatePageMeta(path);
     _clearExistingStructuredData();
 
     switch (path) {
       case '/assistant':
         _injectAssistantStructuredData();
+        break;
+      case '/bookmarks':
+        _injectBookmarksStructuredData();
         break;
       case '/trending':
         _injectTrendingStructuredData();
@@ -35,6 +99,19 @@ class SeoService {
     for (final script in scripts) {
       script.remove();
     }
+  }
+
+  void _injectBookmarksStructuredData() {
+    final data = {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      'name': 'Saved AI Tools — Bookmarks',
+      'url': '$_baseUrl/bookmarks',
+      'description':
+          'Personal shortlist of AI tools saved from the AI Tools Hub directory.',
+      'inLanguage': 'en',
+    };
+    _injectJsonLd(data);
   }
 
   /// Inject structured data for AI Assistant page

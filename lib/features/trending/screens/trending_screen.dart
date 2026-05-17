@@ -9,6 +9,7 @@ import 'package:toolshub/core/widgets/logo_widget.dart';
 import 'package:toolshub/features/home/widgets/animated_background.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toolshub/features/home/widgets/scroll_reveal.dart';
+import 'package:toolshub/core/widgets/seo_page_heading.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -295,8 +296,8 @@ class _TrendingHeader extends StatelessWidget {
             end: Alignment.bottomRight,
           ).createShader(bounds),
           blendMode: BlendMode.srcIn,
-          child: Text(
-            'Elite AI Market\nDominance',
+          child: SeoPageHeading(
+            text: 'Trending AI Tools — Live Market Leaderboard',
             style: GoogleFonts.inter(
               fontSize: 52,
               fontWeight: FontWeight.w900,

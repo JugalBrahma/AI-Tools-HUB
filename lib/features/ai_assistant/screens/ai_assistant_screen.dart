@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toolshub/core/providers/auth_provider.dart' as app_auth;
 import 'package:toolshub/features/subscription/screens/subscription_screen.dart';
 import 'package:toolshub/core/navigation/app_navigator.dart';
+import 'package:toolshub/core/widgets/seo_page_heading.dart';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -373,8 +374,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       ScrollReveal(
                         child: Column(
                           children: [
-                            Text(
-                              'AI Stack Assistant',
+                            SeoPageHeading(
+                              text: 'AI Stack Assistant — Personalized AI Tool Recommendations',
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w900,

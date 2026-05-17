@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,11 +22,13 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.init();
 
-  // Preload Google Fonts for better text rendering
-  await GoogleFonts.pendingFonts([
-    GoogleFonts.inter(),
-    GoogleFonts.ibmPlexMono(),
-  ]);
+  // On web, defer font downloads so first paint is not blocked (SEO / Core Web Vitals).
+  if (!kIsWeb) {
+    await GoogleFonts.pendingFonts([
+      GoogleFonts.inter(),
+      GoogleFonts.ibmPlexMono(),
+    ]);
+  }
 
   // Initialize dependency injection container
   DependencyInjection.instance.initialize();

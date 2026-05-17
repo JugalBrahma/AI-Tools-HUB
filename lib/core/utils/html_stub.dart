@@ -18,15 +18,26 @@ class _History {
 }
 
 class document {
+  static String title = '';
   static List<NodeList> querySelectorAll(String selectors) => [];
+  static _Element? querySelector(String selectors) => null;
   static _Head? head = _Head();
+}
+
+class _Element {
+  void setAttribute(String name, String value) {}
+  void remove() {}
 }
 
 class _Head {
   void append(ScriptElement element) {}
 }
 
-class NodeList {
+class NodeList implements _Element {
+  @override
+  void setAttribute(String name, String value) {}
+
+  @override
   void remove() {}
 }
 

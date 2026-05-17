@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toolshub/core/widgets/seo_page_heading.dart';
 
 class HeroSection extends StatelessWidget {
   const HeroSection({
@@ -44,8 +45,8 @@ class HeroSection extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ).createShader(bounds),
-              child: Text(
-                'Find The Right\nAI Tool Faster',
+              child: SeoPageHeading(
+                text: 'Find The Right AI Tool Faster',
                 textAlign: isMobile ? TextAlign.left : TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: isMobile ? 36 : 84,

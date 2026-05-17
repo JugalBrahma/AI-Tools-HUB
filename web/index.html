@@ -1,23 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="/">
 
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description"
     content="Find the best AI tools for coding, image generation, video production, and writing. The most comprehensive AI directory updated daily.">
@@ -33,16 +21,17 @@
   <meta property="og:description"
     content="Find the best AI tools for coding, image generation, video production, and writing. The most comprehensive AI directory updated daily.">
   <meta property="og:image" content="https://www.aiworkx.space/icons/Icon-512.png">
+  <meta property="og:locale" content="en_US">
 
   <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://www.aiworkx.space/">
-  <meta property="twitter:title" content="AI Tools Hub — The Ultimate AI Tool Directory">
-  <meta property="twitter:description"
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.aiworkx.space/">
+  <meta name="twitter:title" content="AI Tools Hub — The Ultimate AI Tool Directory">
+  <meta name="twitter:description"
     content="Find the best AI tools for coding, image generation, video production, and writing. The most comprehensive AI directory updated daily.">
-  <meta property="twitter:image" content="https://www.aiworkx.space/icons/Icon-512.png">
+  <meta name="twitter:image" content="https://www.aiworkx.space/icons/Icon-512.png">
 
-  <!-- Structured Data (JSON-LD) will be injected dynamically by Flutter based on route -->
+  <link rel="canonical" href="https://www.aiworkx.space/">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -57,19 +46,306 @@
   <title>AI Tools Hub — The Ultimate AI Tool Directory</title>
   <link rel="manifest" href="https://www.aiworkx.space/manifest.json?v=2">
 
-  <!-- Vercel Web Analytics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Static JSON-LD for crawlers (also updated by Flutter on navigation) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "AI Tools Hub",
+    "url": "https://www.aiworkx.space",
+    "description": "Find the best AI tools for coding, image generation, video production, and writing.",
+    "inLanguage": "en",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.aiworkx.space/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "AI Tools Hub",
+    "url": "https://www.aiworkx.space",
+    "logo": "https://www.aiworkx.space/icons/Icon-512.png",
+    "description": "The most comprehensive AI tool directory updated daily"
+  }
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      background: #050506;
+      color: #e8e8ec;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #app-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: #050506;
+      z-index: 9999;
+      transition: opacity 0.2s ease;
+    }
+
+    #app-loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #app-loading .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #252840;
+      border-top-color: #00d4aa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #seo-fallback {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    #seo-fallback.seo-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    #seo-fallback h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      line-height: 1.2;
+      margin: 0 0 16px;
+      color: #fff;
+    }
+
+    #seo-fallback h2 {
+      font-size: 1.125rem;
+      margin: 28px 0 10px;
+      color: #fff;
+    }
+
+    #seo-fallback p {
+      margin: 0 0 14px;
+      color: #b8b8c4;
+    }
+
+    #seo-fallback nav {
+      margin: 20px 0 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+
+    #seo-fallback nav a {
+      color: #00d4aa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    #seo-fallback nav a:hover {
+      text-decoration: underline;
+    }
+
+    #seo-fallback ul {
+      margin: 0 0 14px;
+      padding-left: 1.25rem;
+      color: #b8b8c4;
+    }
+
+    #seo-fallback li {
+      margin-bottom: 6px;
+    }
+  </style>
+
+  <!-- Vercel Web Analytics (deferred, non-blocking) -->
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="app-loading" aria-live="polite" aria-busy="true">
+    <div class="spinner" aria-hidden="true"></div>
+    <p style="margin:0;font-size:14px;color:#888;">Loading AI Tools Hub…</p>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <main id="seo-fallback">
+    <h1 id="seo-h1">AI Tools Hub — Find the Right AI Tool Faster</h1>
+    <nav aria-label="Primary">
+      <a href="https://www.aiworkx.space/">AI Tools Directory</a>
+      <a href="https://www.aiworkx.space/trending">Trending AI Tools</a>
+      <a href="https://www.aiworkx.space/assistant">AI Stack Assistant</a>
+      <a href="https://www.aiworkx.space/bookmarks">Saved AI Tools</a>
+    </nav>
+    <div id="seo-body">
+      <p>
+        AI Tools Hub is a live catalog of artificial intelligence software for developers, designers,
+        marketers, and creators. Browse curated categories, compare capabilities, and discover trending
+        tools updated daily — from coding assistants and vibe-coding platforms to image generators,
+        video AI, and writing copilots.
+      </p>
+      <h2>Why use our AI tools directory?</h2>
+      <p>
+        Choosing the right AI stack is hard when hundreds of products launch every month. We organize
+        tools by real-world use cases so you spend less time searching and more time building. Each
+        listing highlights what the tool does best, who it is for, and how it fits alongside popular
+        alternatives in the same category.
+      </p>
+      <h2>What you can explore</h2>
+      <ul>
+        <li><strong>Coding &amp; development</strong> — AI pair programmers, code review, and autonomous agents.</li>
+        <li><strong>Image generation</strong> — Text-to-image, editing, and design automation.</li>
+        <li><strong>Video production</strong> — Generative video, avatars, and editing workflows.</li>
+        <li><strong>Writing &amp; content</strong> — Copywriting, SEO, summarization, and research assistants.</li>
+      </ul>
+      <h2>AI Stack Assistant</h2>
+      <p>
+        Not sure where to start? Use our
+        <a href="https://www.aiworkx.space/assistant">AI Stack Assistant</a>
+        to describe your goals, team size, and budget. You will receive personalized recommendations
+        drawn from the live catalog so you can assemble a coherent toolchain without trial-and-error.
+      </p>
+      <h2>Trending leaderboard</h2>
+      <p>
+        Visit the
+        <a href="https://www.aiworkx.space/trending">Trending AI Tools</a>
+        page for a real-time view of what is gaining traction across coding, creative, and productivity
+        categories. Rankings refresh as the community discovers and adopts new solutions.
+      </p>
+      <h2>Frequently asked questions</h2>
+      <p><strong>Is AI Tools Hub free?</strong> Yes — browsing the directory and trending lists is free.
+        Premium features such as extended AI Assistant usage are available on optional paid plans.</p>
+      <p><strong>How often is the catalog updated?</strong> We sync with our database continuously so new
+        tools and category changes appear as soon as they are verified.</p>
+      <p><strong>Can I save tools for later?</strong> Sign in and use
+        <a href="https://www.aiworkx.space/bookmarks">Saved AI Tools</a> to bookmark products you want to evaluate.</p>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var base = 'https://www.aiworkx.space';
+      var path = window.location.pathname.replace(/\/$/, '') || '/';
+
+      var pages = {
+        '/': {
+          title: 'AI Tools Hub — The Ultimate AI Tool Directory',
+          description: 'Find the best AI tools for coding, image generation, video production, and writing. Updated daily.',
+          canonical: base + '/',
+          h1: 'AI Tools Hub — Find the Right AI Tool Faster'
+        },
+        '/trending': {
+          title: 'Trending AI Tools — Live Leaderboard | AI Tools Hub',
+          description: 'Real-time leaderboard of trending AI tools for coding, image, video, and writing. Updated daily.',
+          canonical: base + '/trending',
+          h1: 'Trending AI Tools — Live Market Leaderboard'
+        },
+        '/assistant': {
+          title: 'AI Stack Assistant — Personalized Tool Recommendations',
+          description: 'Describe your goals and get personalized AI tool stack recommendations for coding, design, and content.',
+          canonical: base + '/assistant',
+          h1: 'AI Stack Assistant — Personalized AI Tool Recommendations'
+        },
+        '/bookmarks': {
+          title: 'Saved AI Tools — Your Bookmarks | AI Tools Hub',
+          description: 'Save and organize AI tools from the directory. Sign in to sync bookmarks across devices.',
+          canonical: base + '/bookmarks',
+          h1: 'Saved AI Tools — Your Bookmarked Directory'
+        }
+      };
+
+      var page = pages[path] || pages['/'];
+      document.title = page.title;
+      document.getElementById('seo-h1').textContent = page.h1;
+
+      var desc = document.querySelector('meta[name="description"]');
+      if (desc) desc.setAttribute('content', page.description);
+
+      var canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical) canonical.setAttribute('href', page.canonical);
+
+      var ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute('content', page.canonical);
+
+      if (path === '/trending') {
+        document.getElementById('seo-body').innerHTML =
+          '<p>Track which AI products are gaining momentum across engineering, design, and content workflows. ' +
+          'Our trending leaderboard ranks tools by category — overall, coding, image generation, video, and writing — ' +
+          'so you can spot breakout apps before they become mainstream.</p>' +
+          '<h2>How rankings work</h2><p>Scores combine adoption signals and category performance. ' +
+          'Lists refresh frequently so product teams, developers, and creators always see current market leaders.</p>' +
+          '<h2>Explore more</h2><p>Return to the <a href="' + base + '/">full AI tools directory</a>, ' +
+          'try the <a href="' + base + '/assistant">AI Stack Assistant</a>, or ' +
+          '<a href="' + base + '/bookmarks">save tools</a> you want to compare later.</p>';
+      } else if (path === '/assistant') {
+        document.getElementById('seo-body').innerHTML =
+          '<p>Tell us what you are building — a SaaS product, marketing campaign, video pipeline, or internal tool — ' +
+          'and the AI Stack Assistant recommends a practical set of tools from our live catalog. ' +
+          'Filter by budget, team size, and workflow so recommendations stay actionable.</p>' +
+          '<h2>Who it helps</h2><p>Founders, engineering leads, designers, and solo creators use the assistant ' +
+          'to shorten research cycles and avoid paying for overlapping subscriptions.</p>' +
+          '<h2>Related pages</h2><p>Browse the <a href="' + base + '/">AI tools directory</a>, ' +
+          'check <a href="' + base + '/trending">trending tools</a>, or ' +
+          '<a href="' + base + '/bookmarks">bookmark</a> your shortlist.</p>';
+      } else if (path === '/bookmarks') {
+        document.getElementById('seo-body').innerHTML =
+          '<p>Keep a personal shortlist of AI tools while you evaluate vendors. Bookmarks sync when you sign in, ' +
+          'making it easy to share candidates with your team or return during procurement.</p>' +
+          '<h2>Getting started</h2><p>Explore the <a href="' + base + '/">main directory</a>, ' +
+          'use <a href="' + base + '/assistant">AI Stack Assistant</a> for recommendations, or view ' +
+          '<a href="' + base + '/trending">trending tools</a> for inspiration.</p>';
+      }
+
+      function hideLoader() {
+        var loader = document.getElementById('app-loading');
+        if (loader) loader.classList.add('hidden');
+        setTimeout(function () {
+          if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 300);
+      }
+
+      function hideSeoFallback() {
+        var seo = document.getElementById('seo-fallback');
+        if (seo) seo.classList.add('seo-hidden');
+      }
+
+      window.addEventListener('flutter-first-frame', function () {
+        hideLoader();
+        hideSeoFallback();
+      });
+
+      setTimeout(hideLoader, 12000);
+    })();
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 

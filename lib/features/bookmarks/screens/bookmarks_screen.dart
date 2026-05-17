@@ -7,6 +7,7 @@ import 'package:toolshub/core/providers/bookmark_provider.dart';
 import 'package:toolshub/core/providers/tool_provider.dart';
 import 'package:toolshub/core/models/tool_model.dart';
 import 'package:toolshub/core/widgets/bookmark_card.dart';
+import 'package:toolshub/core/widgets/seo_page_heading.dart';
 
 class BookmarksScreen extends StatelessWidget {
   final VoidCallback? onDismiss;
@@ -115,8 +116,8 @@ class BookmarksScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               centerTitle: false,
               titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
-              title: Text(
-                'Bookmarks',
+              title: SeoPageHeading(
+                text: 'Saved AI Tools — Your Bookmarked Directory',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w800,
                   fontSize: 22,

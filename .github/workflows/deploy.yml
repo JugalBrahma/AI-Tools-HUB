@@ -28,7 +28,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter Web
-        run: flutter build web --release --wasm
+        run: flutter build web --release --tree-shake-icons --no-wasm-dry-run
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest

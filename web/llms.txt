@@ -1,0 +1,15 @@
+# AI Tools Hub (aiworkx.space)
+
+> Live directory of AI tools for coding, image, video, and writing — with trending rankings and a stack recommendation assistant.
+
+## Primary pages
+
+- https://www.aiworkx.space/ — Main AI tools catalog
+- https://www.aiworkx.space/trending — Trending AI tools leaderboard
+- https://www.aiworkx.space/assistant — AI Stack Assistant (personalized recommendations)
+- https://www.aiworkx.space/bookmarks — Saved tools (requires sign-in)
+
+## Optional
+
+- https://www.aiworkx.space/sitemap.xml
+- https://www.aiworkx.space/robots.txt

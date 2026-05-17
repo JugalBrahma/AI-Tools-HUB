@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Footer extends StatelessWidget {
@@ -20,15 +21,16 @@ class Footer extends StatelessWidget {
                 children: [
                   _buildBrandInfo(),
                   const SizedBox(height: 24),
-                  _buildLinks(isPhone: true),
+                  _buildLinks(),
                 ],
               )
             else
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildBrandInfo(),
-                  _buildLinks(isPhone: false),
+                  _buildLinks(),
                 ],
               ),
           ],
@@ -63,41 +65,39 @@ class Footer extends StatelessWidget {
     );
   }
 
-  Widget _buildLinks({required bool isPhone}) {
-    final List<Widget> links = [
-      Text(
-        'Privacy Policy',
-        style: GoogleFonts.ibmPlexMono(
-          fontSize: 10,
-          color: const Color(0xFF555555),
-        ),
-      ),
-      SizedBox(width: isPhone ? 16 : 24),
-      Text(
-        'Terms of Service',
-        style: GoogleFonts.ibmPlexMono(
-          fontSize: 10,
-          color: const Color(0xFF555555),
-        ),
-      ),
-      SizedBox(width: isPhone ? 16 : 24),
-      Text(
-        'Contact Us',
-        style: GoogleFonts.ibmPlexMono(
-          fontSize: 10,
-          color: const Color(0xFF555555),
-        ),
-      ),
-    ];
+  Widget _buildLinks() {
+    return Wrap(
+      spacing: 20,
+      runSpacing: 12,
+      children: [
+        _FooterLink(href: '/', label: 'AI Tools Directory'),
+        _FooterLink(href: '/trending', label: 'Trending AI Tools'),
+        _FooterLink(href: '/assistant', label: 'AI Stack Assistant'),
+        _FooterLink(href: '/bookmarks', label: 'Saved Tools'),
+      ],
+    );
+  }
+}
 
-    if (isPhone) {
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: links,
-      );
-    }
+class _FooterLink extends StatelessWidget {
+  const _FooterLink({required this.href, required this.label});
 
-    return Row(children: links);
+  final String href;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.go(href),
+      child: Text(
+        label,
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 10,
+          color: const Color(0xFF888888),
+          decoration: TextDecoration.underline,
+          decorationColor: const Color(0xFF444444),
+        ),
+      ),
+    );
   }
 }
