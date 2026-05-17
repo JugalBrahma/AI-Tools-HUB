@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/(.*\\.(js|css|wasm|woff2|png|jpg|jpeg|gif|ico|svg|webp))",
+      "source": "/(.*)\\.(js|css|wasm|woff2|png|jpg|jpeg|gif|ico|svg|webp)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -37,7 +37,43 @@
       ]
     },
     {
-      "source": "/(index.html|flutter_bootstrap.js|main.dart.js|flutter.js|version.json)",
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/main.dart.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/flutter.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/flutter_bootstrap.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/version.json",
       "headers": [
         {
           "key": "Cache-Control",
